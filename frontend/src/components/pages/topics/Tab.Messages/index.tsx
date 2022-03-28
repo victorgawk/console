@@ -143,7 +143,7 @@ export class TopicMessageView extends Component<TopicMessageViewProps> {
                         {/*
                             todo: move this below the table (aligned left)
                             This requires more work becasue we'd have to remove the pagination controls from the table and provide our own
-                         */}
+                        */}
                         {/* <this.SearchQueryAdditionalInfo /> */}
                     </Row>
 
@@ -207,7 +207,7 @@ export class TopicMessageView extends Component<TopicMessageViewProps> {
                 </Label>
                 <Label text='Max Results' style={{ ...spaceStyle }}>
                     <Select<number> value={searchParams.maxResults} onChange={c => searchParams.maxResults = c} style={{ width: '9em' }} size='middle'>
-                        {[1, 3, 5, 10, 20, 50, 100, 200, 500].map(i => <Select.Option key={i} value={i}>{i.toString()}</Select.Option>)}
+                        {[1, 3, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000].map(i => <Select.Option key={i} value={i}>{i.toString()}</Select.Option>)}
                     </Select>
                 </Label>
                 <Label text='Filter' style={{ ...spaceStyle }}>

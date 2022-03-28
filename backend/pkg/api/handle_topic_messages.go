@@ -42,8 +42,8 @@ func (l *ListMessagesRequest) OK() error {
 		return fmt.Errorf("partitionID is smaller than -1")
 	}
 
-	if l.MaxResults <= 0 || l.MaxResults > 500 {
-		return fmt.Errorf("max results must be between 1 and 500")
+	if l.MaxResults <= 0 || l.MaxResults > 100000 {
+		return fmt.Errorf("max results must be between 1 and 100000")
 	}
 
 	if _, err := l.DecodeInterpreterCode(); err != nil {
