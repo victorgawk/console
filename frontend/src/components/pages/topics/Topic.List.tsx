@@ -24,6 +24,7 @@ class TopicList extends PageComponent {
     pageConfig = makePaginationConfig(uiSettings.topicList.pageSize);
     quickSearchReaction: IReactionDisposer;
     @observable topicToDelete: null | string = null;
+    @observable deleteAllRecordsVisible: boolean = false;
 
     constructor(p: any) {
         super(p);
@@ -87,88 +88,106 @@ class TopicList extends PageComponent {
         );
 
         return (
-            <motion.div {...animProps} style={{ margin: '0 1rem' }}>
-                <Card>
-                    <Row>
-                        <Statistic title="Total Topics" value={topics.length} />
-                        <Popover title="Partition Details" content={partitionDetails} placement="right" mouseEnterDelay={0} trigger="hover">
-                            <div className="hoverLink" style={{ display: 'flex', verticalAlign: 'middle', cursor: 'default' }}>
-                                <Statistic title="Total Partitions" value={partitionCountReal + partitionCountOnlyReplicated} />
-                            </div>
-                        </Popover>
-                    </Row>
-                </Card>
+                <motion.div {...animProps} style={{ margin: '0 1rem' }}>
+                    <Card>
+                        <Row>
+                            <Statistic title="Total Topics" value={topics.length} />
+                            <Popover title="Partition Details" content={partitionDetails} placement="right" mouseEnterDelay={0} trigger="hover">
+                                <div className="hoverLink" style={{ display: 'flex', verticalAlign: 'middle', cursor: 'default' }}>
+                                    <Statistic title="Total Partitions" value={partitionCountReal + partitionCountOnlyReplicated} />
+                                </div>
+                            </Popover>
+                            <Button
+                                type="default"
+                                danger
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    this.deleteAllRecordsVisible = true;
+                                }}
+                            >
+                                Delete All Records
+                            </Button>
+                            <ConfirmDeleteAllRecordsModal
+                                deleteAllRecordsVisible={this.deleteAllRecordsVisible}
+                                onCancel={() => (this.deleteAllRecordsVisible = false)}
+                                onFinish={() => {
+                                    this.deleteAllRecordsVisible = false;
+                                    this.refreshData(true);
+                                }}
+                            />
+                        </Row>
+                    </Card>
 
-                <Card>
-                    <KowlTable
-                        dataSource={topics}
-                        rowKey={(x) => x.topicName}
-                        columns={[
-                            { title: 'Name', dataIndex: 'topicName', render: (t, r) => renderName(r), sorter: sortField('topicName'), className: 'whiteSpaceDefault', defaultSortOrder: 'ascend' },
-                            { title: 'Partitions', dataIndex: 'partitions', render: (t, r) => r.partitionCount, sorter: (a, b) => a.partitionCount - b.partitionCount, width: 1 },
-                            { title: 'Replication', dataIndex: 'replicationFactor', sorter: sortField('replicationFactor'), width: 1 },
-                            {
-                                title: 'CleanupPolicy', dataIndex: 'cleanupPolicy', width: 1,
-                                filterType: {
-                                    type: 'enum',
-                                    optionClassName: 'capitalize'
+                    <Card>
+                        <KowlTable
+                            dataSource={topics}
+                            rowKey={(x) => x.topicName}
+                            columns={[
+                                { title: 'Name', dataIndex: 'topicName', render: (t, r) => renderName(r), sorter: sortField('topicName'), className: 'whiteSpaceDefault', defaultSortOrder: 'ascend' },
+                                { title: 'Partitions', dataIndex: 'partitions', render: (t, r) => r.partitionCount, sorter: (a, b) => a.partitionCount - b.partitionCount, width: 1 },
+                                { title: 'Replication', dataIndex: 'replicationFactor', sorter: sortField('replicationFactor'), width: 1 },
+                                {
+                                    title: 'CleanupPolicy', dataIndex: 'cleanupPolicy', width: 1,
+                                    filterType: {
+                                        type: 'enum',
+                                        optionClassName: 'capitalize'
+                                    },
+                                    sorter: sortField('cleanupPolicy'),
                                 },
-                                sorter: sortField('cleanupPolicy'),
-                            },
-                            {
-                                title: 'Size', render: (t, r) => renderLogDirSummary(r.logDirSummary), sorter: (a, b) => a.logDirSummary.totalSizeBytes - b.logDirSummary.totalSizeBytes, width: '140px',
-                            },
-                            {
-                                width: 1,
-                                title: ' ',
-                                key: 'action',
-                                className: 'msgTableActionColumn',
-                                render: (text, record) => (
-                                    <div style={{ display: 'flex', gap: '4px' }}>
-                                        <DeleteDisabledTooltip topic={record}>
-                                            <Button
-                                                type="text"
-                                                className="iconButton"
-                                                onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    this.topicToDelete = record.topicName;
-                                                }}
-                                                danger
-                                            >
-                                                <TrashIcon />
-                                            </Button>
-                                        </DeleteDisabledTooltip>
-                                    </div>
-                                ),
-                            },
-                        ]}
+                                {
+                                    title: 'Size', render: (t, r) => renderLogDirSummary(r.logDirSummary), sorter: (a, b) => a.logDirSummary.totalSizeBytes - b.logDirSummary.totalSizeBytes, width: '140px',
+                                },
+                                {
+                                    width: 1,
+                                    title: ' ',
+                                    key: 'action',
+                                    className: 'msgTableActionColumn',
+                                    render: (text, record) => (
+                                        <div style={{ display: 'flex', gap: '4px' }}>
+                                            <DeleteDisabledTooltip topic={record}>
+                                                <Button
+                                                    type="text"
+                                                    className="iconButton"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        this.topicToDelete = record.topicName;
+                                                    }}
+                                                    danger
+                                                >
+                                                    <TrashIcon />
+                                                </Button>
+                                            </DeleteDisabledTooltip>
+                                        </div>
+                                    ),
+                                },
+                            ]}
 
-                        search={{
-                            searchColumnIndex: 0,
-                            isRowMatch: (row, regex) => {
-                                if (regex.test(row.topicName)) return true;
-                                if (regex.test(row.cleanupPolicy)) return true;
-                                return false;
-                            },
+                            search={{
+                                searchColumnIndex: 0,
+                                isRowMatch: (row, regex) => {
+                                    if (regex.test(row.topicName)) return true;
+                                    if (regex.test(row.cleanupPolicy)) return true;
+                                    return false;
+                                },
 
+                            }}
+
+                            observableSettings={uiSettings.topicList}
+                            onRow={(record) => ({
+                                onClick: () => appGlobal.history.push('/topics/' + record.topicName),
+                            })}
+                            rowClassName="hoverLink"
+                        />
+                    </Card>
+                    <ConfirmDeletionModal
+                        topicToDelete={this.topicToDelete}
+                        onCancel={() => (this.topicToDelete = null)}
+                        onFinish={() => {
+                            this.topicToDelete = null;
+                            this.refreshData(true);
                         }}
-
-                        observableSettings={uiSettings.topicList}
-                        onRow={(record) => ({
-                            onClick: () => appGlobal.history.push('/topics/' + record.topicName),
-                        })}
-                        rowClassName="hoverLink"
                     />
-                </Card>
-                <ConfirmDeletionModal
-                    topicToDelete={this.topicToDelete}
-                    onCancel={() => (this.topicToDelete = null)}
-                    onFinish={() => {
-                        this.topicToDelete = null;
-                        this.refreshData(true);
-                    }}
-                />
-            </motion.div>
+                </motion.div>
         );
     }
 }
@@ -282,6 +301,103 @@ function ConfirmDeletionModal({ topicToDelete, onFinish, onCancel }: { topicToDe
                 {error && <Alert type="error" message={`An error occurred: ${typeof error === 'string' ? error : error.message}`} />}
                 <p>
                     Are you sure you want to delete topic <strong>{topicToDelete}</strong>? This action is irrevocable.
+                </p>
+            </>
+        </Modal>
+    );
+}
+
+function ConfirmDeleteAllRecordsModal({ deleteAllRecordsVisible, onFinish, onCancel }: { deleteAllRecordsVisible: boolean; onFinish: () => void; onCancel: () => void }) {
+    const [deletionPending, setDeletionPending] = useState(false);
+    const [error, setError] = useState<string | Error | null>(null);
+
+    const cleanup = () => {
+        setDeletionPending(false);
+        setError(null);
+    };
+
+    const finish = (errors: Array<string>) => {
+        onFinish();
+        cleanup();
+        if (errors.length > 0) {
+            for (const error of errors) {
+                notification['error']({
+                    message: `${error}`,
+                })
+            }
+        } else {
+            notification['success']({
+                message: `Records from all topics deleted successfully`,
+            });
+        }
+    };
+
+    const cancel = () => {
+        onCancel();
+        cleanup();
+    };
+
+    return (
+        <Modal
+            className="deleteAllRecordsModal"
+            visible={deleteAllRecordsVisible}
+            centered
+            closable={false}
+            maskClosable={!deletionPending}
+            keyboard={!deletionPending}
+            okText={error ? 'Retry' : 'Yes'}
+            confirmLoading={deletionPending}
+            okType="danger"
+            cancelText="No"
+            cancelButtonProps={{ disabled: deletionPending }}
+            onCancel={cancel}
+            onOk={() => {
+                setDeletionPending(true);
+
+                api.refreshTopics();
+                api.refreshPartitions()
+                .then(() => {
+                    if (api.topics == null) {
+                        setDeletionPending(false);
+                        return Promise.resolve().then(() => {
+                            return [];
+                        });
+                    }
+                    const promises: Array<Promise<{topic: Topic; errors: Array<string>}>> = []
+                    for (const topic of api.topics) {
+                        const promise = api.deleteTopicRecordsFromAllPartitionsHighWatermark(topic.topicName).then((responseData) => {
+                            const errors: Array<string> = [];
+                            if (responseData == null) {
+                                errors.push(`Topic ${topic.topicName} doesn't have partitions.`);
+                            } else {
+                                const errorPartitions = responseData.partitions.filter((partition) => !!partition.error);
+                                if (errorPartitions.length > 0) {
+                                    errors.concat(errorPartitions.map(({ partitionId, error }) => `Topic ${topic.topicName} partition ${partitionId}: ${error}`));
+                                }
+                            }
+                            return { topic, errors };
+                        });
+                        promises.push(promise);
+                    }
+
+                    return Promise.all(promises)
+                    .then((responses) => {
+                        const errors: Array<string> = [];
+                        for (const response of responses) {
+                            errors.concat(response.errors);
+                        }
+                        return errors;
+                    })
+                })
+                .then(finish)
+                .catch(setError)
+                .finally(() => { setDeletionPending(false) });
+            }}
+        >
+            <>
+                {error && <Alert type="error" message={`An error occurred: ${typeof error === 'string' ? error : error.message}`} />}
+                <p>
+                    Are you sure you want to delete all records from all topics? This action is irrevocable.
                 </p>
             </>
         </Modal>
