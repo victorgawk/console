@@ -95,15 +95,31 @@ func (d *deserializer) DeserializeRecord(record *kgo.Record) *deserializedRecord
 		}
 	}
 
+	if record.Topic != "event-in" && record.Topic != "event-out" && record.Topic != "online-connector" && record.Topic != "online-connector-out" {
+		obj, err := ParseBase64ToMarshal(record.Value)
+		if err == nil {
+			record.Value = obj
+		}
+	}
+
 	headers := make(map[string]*deserializedPayload)
 	for _, header := range record.Headers {
 		headers[header.Key] = d.deserializePayload(header.Value, record.Topic, proto.RecordValue)
 	}
-	return &deserializedRecord{
+	deserializedRecord := &deserializedRecord{
 		Key:     d.deserializePayload(record.Key, record.Topic, proto.RecordKey),
 		Value:   d.deserializePayload(record.Value, record.Topic, proto.RecordValue),
 		Headers: headers,
 	}
+
+	if record.Topic == "online-connector-out" {
+		obj, err := ParseBase64ToObject(record.Value)
+		if err == nil {
+			deserializedRecord.Value.Payload.Payload = []byte(fmt.Sprint(obj))
+		}
+	}
+
+	return deserializedRecord
 }
 
 func (d *deserializer) deserializePayload(payload []byte, topicName string, recordType proto.RecordPropertyType) *deserializedPayload {
