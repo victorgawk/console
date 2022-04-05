@@ -29,6 +29,7 @@ type TopicSummary struct {
 	CleanupPolicy     string             `json:"cleanupPolicy"`
 	Documentation     DocumentationState `json:"documentation"`
 	LogDirSummary     TopicLogDirSummary `json:"logDirSummary"`
+	NumMessages       int64              `json:"numMessages"`
 
 	// What actions the logged in user is allowed to run on this topic
 	AllowedActions []string `json:"allowedActions"`
@@ -64,6 +65,36 @@ func (s *Service) GetTopicsOverview(ctx context.Context) ([]*TopicSummary, error
 		}
 	}()
 	logDirsByTopic := s.logDirsByTopic(childCtx, metadata)
+
+	topicWatermarkReqs := make(map[string][]int32)
+	for _, topic := range metadata.Topics {
+		topicErr := kerr.TypedErrorForCode(topic.ErrorCode)
+		if topicErr != nil {
+			// If there's an error on the topic level we won't have any partitions reported back
+			continue
+		}
+		topicName := *topic.Topic
+		for _, partition := range topic.Partitions {
+			partitionID := partition.Partition
+			topicWatermarkReqs[topicName] = append(topicWatermarkReqs[topicName], partitionID)
+		}
+	}
+	waterMarks, err := s.kafkaSvc.GetPartitionMarksBulk(ctx, topicWatermarkReqs)
+	if err != nil {
+		return nil, err
+	}
+	messagesByTopic := make(map[string]int64)
+	for _, topic := range metadata.Topics {
+		topicName := *topic.Topic
+		topicMarks := waterMarks[topicName]
+		topicMessages := int64(0)
+		for _, partition := range topic.Partitions {
+			partitionMarks := topicMarks[partition.Partition]
+			topicMessages += partitionMarks.High - partitionMarks.Low
+		}
+		messagesByTopic[topicName] = topicMessages
+	}
+
 	wg.Wait()
 
 	// 4. Merge information from all requests and construct the TopicSummary object
@@ -99,6 +130,7 @@ func (s *Service) GetTopicsOverview(ctx context.Context) ([]*TopicSummary, error
 			ReplicationFactor: len(topic.Partitions[0].Replicas),
 			CleanupPolicy:     policy,
 			LogDirSummary:     logDirsByTopic[topicName],
+			NumMessages:       messagesByTopic[topicName],
 			Documentation:     docState,
 		}
 	}

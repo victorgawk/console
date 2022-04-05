@@ -138,6 +138,9 @@ class TopicList extends PageComponent {
                                     title: 'Size', render: (t, r) => renderLogDirSummary(r.logDirSummary), sorter: (a, b) => a.logDirSummary.totalSizeBytes - b.logDirSummary.totalSizeBytes, width: '140px',
                                 },
                                 {
+                                    title: 'Messages', render: (t, r) => r.numMessages, sorter: (a, b) => a.numMessages - b.numMessages, width: '140px',
+                                },
+                                {
                                     width: 1,
                                     title: ' ',
                                     key: 'action',
