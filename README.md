@@ -32,9 +32,7 @@ Kowl (previously known as Kafka Owl) is a web application that helps you to expl
 | **Login System (Google, GitHub, Okta)** | :x: | :white_check_mark: |
 | **RBAC permissions with group syncing** | :x: | :white_check_mark: |
 | **Screenshots** | Preview .gif in README | https://cloudhut.dev/ |
-| **Price** | Always free / Open source | Free during beta\* |
 
-\*If you want to participate in the free beta sign in here: https://license.cloudhut.dev/ . You'll get a forever free license for 2 seats. If you need more than 2 seats, just drop us an email at info@cloudhut.dev
 
 ## Getting Started
 
@@ -80,7 +78,7 @@ We maintain a docker-compose file that launches zookeeper, kafka and kowl: [/doc
 
 ## Chat with us
 
-We use Discord to communicate. If you are looking for more interactive discussions or support, you are invited to join our Discord server: https://discord.gg/KQj7P6v
+Please join our `#kowl` [Community Slack](https://redpanda.com/slack)
 
 ## Sponsors
 
@@ -90,6 +88,7 @@ We use Discord to communicate. If you are looking for more interactive discussio
 
 - REWE Digital [https://www.rewe-digital.com/]
 - Redpanda Data [https://redpanda.com/]
+- OPT-NC (Office des Postes et Télécommunications de Nouvelle-Calédonie) [https://office.opt.nc/]
 
 ## License
 
