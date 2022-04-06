@@ -82,4 +82,7 @@ COPY --from=frontendBuilder /app/build/ /app/build
 RUN apk update && apk add --no-cache openssh
 RUN ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts
 
+RUN apk update && apk add tzdata
+ENV TZ=America/Sao_Paulo
+
 ENTRYPOINT ["./kowl"]
