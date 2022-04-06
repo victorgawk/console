@@ -29,7 +29,7 @@ import { LayoutBypass, RadioOptionGroup, toSafeString } from '../utils/tsxUtils'
 import { UserPreferencesButton } from './misc/UserPreferences';
 import { featureErrors } from '../state/supportedFeatures';
 import { renderErrorModals } from './misc/ErrorModal';
-import { SyncIcon, ChevronRightIcon } from '@primer/octicons-react';
+import { SyncIcon, ChevronRightIcon, PlayIcon } from '@primer/octicons-react';
 
 const { Content, Footer, Sider } = Layout;
 
@@ -165,6 +165,9 @@ const AppSide = observer(() => (
 ));
 
 
+const REFRESH_INTERVAL_SEC = 1;
+let autoRefreshActive: boolean = false;
+let refreshIntervalId: NodeJS.Timeout;
 let lastRequestCount = 0;
 const DataRefreshButton = observer(() => {
 
@@ -175,6 +178,22 @@ const DataRefreshButton = observer(() => {
             When switching pages, any data older than <span className='codeBox'>{prettyMilliseconds(REST_CACHE_DURATION_SEC * 1000)}</span> will be refreshed automatically.
         </div>;
         // TODO: small table that shows what cached data we have and how old it is
+    };
+    const autoRefreshTextFunc = (): ReactNode => {
+        return <div style={{ maxWidth: '350px' }}>
+            Enable or disable automatic refresh every <span className='codeBox'>{REFRESH_INTERVAL_SEC}s</span>.
+        </div>;
+    };
+    const autoRefreshFunc = () => {
+        if (autoRefreshActive) {
+            if (refreshIntervalId) clearInterval(refreshIntervalId);
+            autoRefreshActive = false;
+            appGlobal.onRefresh();
+        } else {
+            autoRefreshActive = true;
+            appGlobal.onRefresh();
+            refreshIntervalId = setInterval(() => { appGlobal.onRefresh() }, REFRESH_INTERVAL_SEC * 1000);
+        }
     };
 
     // Track how many requests we've sent in total
@@ -203,8 +222,11 @@ const DataRefreshButton = observer(() => {
             api.activeRequests.length == 0
                 ?
                 <>
+                    <Popover title='Auto Refresh' content={autoRefreshTextFunc} placement='rightTop' overlayClassName='popoverSmall' >
+                        <Button icon={< PlayIcon size={16} className={autoRefreshActive ? 'pulsating' : ''} />} shape='circle' className='hoverButton' style={{ color: 'hsl(205, 100%, 50%)', background: 'transparent' }} onClick={() => autoRefreshFunc()} />
+                    </Popover>
                     <Popover title='Force Refresh' content={refreshTextFunc} placement='rightTop' overlayClassName='popoverSmall' >
-                        <Button icon={< SyncIcon size={16} />} shape='circle' className='hoverButton' style={{ color: 'hsl(205, 100%, 50%)', background: 'transparent' }} onClick={() => appGlobal.onRefresh()} />
+                        <Button icon={< SyncIcon size={16} className={autoRefreshActive ? 'rotation' : ''} />} shape='circle' className='hoverButton' style={{ color: 'hsl(205, 100%, 50%)', background: 'transparent' }} onClick={() => appGlobal.onRefresh()} />
                     </Popover>
                     {/* <span style={{ paddingLeft: '.2em', fontSize: '80%' }}>fetched <b>1 min</b> ago</span> */}
                 </>
