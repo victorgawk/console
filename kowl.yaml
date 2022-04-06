@@ -1,0 +1,8 @@
+kafka:
+  brokers:
+    - host.docker.internal:9092
+server:
+  listenPort: 9000
+
+logger:
+  level: debug
