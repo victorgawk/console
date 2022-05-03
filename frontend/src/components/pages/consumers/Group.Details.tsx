@@ -24,6 +24,7 @@ import { ShortNum } from "../../misc/ShortNum";
 import Tabs from "../../misc/tabs/Tabs";
 import AclList from "../topics/Tab.Acl/AclList";
 import { SkipIcon } from "@primer/octicons-react";
+import { IsReadOnly } from '../../../utils/env';
 
 
 @observer
@@ -540,6 +541,10 @@ const EditDisabledTooltip = (p: { group: GroupDescription, children: [editButton
     // Wrap each button if the user doesn't have the corresponding permission
     let editButtonMessage = null as string | null;
     let deleteButtonMessage = null as string | null;
+
+    if (IsReadOnly) {
+      editButtonMessage = deleteButtonMessage = "Read only mode";
+    }
 
     if (group.noEditPerms) editButtonMessage = "You don't have 'editConsumerGroup' permissions for this group";
     if (group.noDeletePerms) deleteButtonMessage = "You don't have 'deleteConsumerGroup' permissions for this group";

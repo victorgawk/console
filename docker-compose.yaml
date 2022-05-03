@@ -9,9 +9,10 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - "KOWL_GIT_SHA=5ff6e3c4dea98737b661186519eb310f2a898d06"
+        - "KOWL_GIT_SHA=8a5700c5141cac9f1b7e300008daec5d3df6187d"
         - "KOWL_GIT_REF=sisv3"
-        - "KOWL_TIMESTAMP=1649245410"
+        - "KOWL_TIMESTAMP=1651580023"
+        - "READ_ONLY=false"
     entrypoint: ./kowl --config.filepath=/etc/kowl/config.yaml
     volumes:
       - ./kowl.yaml:/etc/kowl/config.yaml

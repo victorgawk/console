@@ -51,6 +51,9 @@ ENV REACT_APP_KOWL_TIMESTAMP ${KOWL_TIMESTAMP}
 ARG BUILT_FROM_PUSH
 ENV REACT_APP_BUILT_FROM_PUSH ${BUILT_FROM_PUSH}
 
+ARG READ_ONLY
+ENV REACT_APP_READ_ONLY ${READ_ONLY}
+
 COPY ./frontend ./
 RUN npm run build
 # All the built frontend files for the SPA are now in '/app/build/'

@@ -19,6 +19,8 @@ const envNames = [
     'REACT_APP_BUSINESS', // is business version?
 
     'REACT_APP_DEV_HINT', // for debugging, since we can't override NODE_ENV
+
+    'REACT_APP_READ_ONLY', // is read only?
 ] as const;
 
 type Environment = { [key in typeof envNames[number]]: string };
@@ -53,6 +55,8 @@ export function getBuildDate(): Date | undefined {
     if (timestamp == 0) return undefined;
     return new Date(timestamp * 1000);
 }
+
+export const IsReadOnly = Boolean(env.REACT_APP_READ_ONLY);
 
 
 //

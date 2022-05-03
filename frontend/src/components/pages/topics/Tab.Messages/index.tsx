@@ -40,6 +40,7 @@ import filterExample2 from '../../../../assets/filter-example-2.png';
 import { getPreviewTags, PreviewSettings } from './PreviewSettings';
 import * as moment from 'moment';
 import DeleteRecordsModal from '../DeleteRecordsModal/DeleteRecordsModal';
+import { IsReadOnly } from '../../../../utils/env';
 
 
 
@@ -1431,6 +1432,12 @@ function DeleteRecordsButton({
     if (isCompacted) {
         return (
             <Tooltip placement="top" title="Records on Topics with the `compact` cleanup policy cannot be deleted.">
+                <Button disabled>Delete Records</Button>
+            </Tooltip>
+        );
+    } else if (IsReadOnly) {
+        return (
+            <Tooltip placement="top" title="Read only mode.">
                 <Button disabled>Delete Records</Button>
             </Tooltip>
         );

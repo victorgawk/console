@@ -18,6 +18,7 @@ import SearchBar from '../../misc/SearchBar';
 import { PageComponent, PageInitHelper } from '../Page';
 import { useState } from 'react';
 import { CheckIcon, CircleSlashIcon, EyeClosedIcon } from '@primer/octicons-react';
+import { IsReadOnly } from '../../../utils/env';
 
 @observer
 class TopicList extends PageComponent {
@@ -97,16 +98,18 @@ class TopicList extends PageComponent {
                                     <Statistic title="Total Partitions" value={partitionCountReal + partitionCountOnlyReplicated} />
                                 </div>
                             </Popover>
-                            <Button
-                                type="default"
-                                danger
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    this.deleteAllRecordsVisible = true;
-                                }}
-                            >
-                                Delete All Records
-                            </Button>
+                            <DeleteAllRecordsDisabledTooltip>
+                              <Button
+                                  type="default"
+                                  danger
+                                  onClick={(event) => {
+                                      event.stopPropagation();
+                                      this.deleteAllRecordsVisible = true;
+                                  }}
+                              >
+                                  Delete All Records
+                              </Button>
+                            </DeleteAllRecordsDisabledTooltip>
                             <ConfirmDeleteAllRecordsModal
                                 deleteAllRecordsVisible={this.deleteAllRecordsVisible}
                                 onCancel={() => (this.deleteAllRecordsVisible = false)}
@@ -421,11 +424,27 @@ function DeleteDisabledTooltip(props: { topic: Topic; children: JSX.Element }): 
         </Tooltip>
     );
 
+    if (IsReadOnly) return <>{wrap(deleteButton, "Read only mode.")}</>;
+
     return <>{hasDeletePrivilege(topic.allowedActions) ? deleteButton : wrap(deleteButton, "You don't have 'deleteTopic' permission for this topic.")}</>;
 }
 
 function hasDeletePrivilege(allowedActions?: Array<TopicAction>) {
     return Boolean(allowedActions?.includes('all') || allowedActions?.includes('deleteTopic'));
+}
+
+function DeleteAllRecordsDisabledTooltip(props: { children: JSX.Element }): JSX.Element {
+  const deleteButton = props.children;
+  const wrap = (button: JSX.Element, message: string) => (
+      <Tooltip placement="top" trigger="hover" mouseLeaveDelay={0} getPopupContainer={findPopupContainer} overlay={message}>
+          {React.cloneElement(button, {
+              disabled: true,
+              className: (button.props.className ?? '') + ' disabled',
+              onClick: undefined,
+          })}
+      </Tooltip>
+  );
+  return <>{IsReadOnly ? wrap(deleteButton, "Read only mode.") : deleteButton}</>;
 }
 
 export default TopicList;
