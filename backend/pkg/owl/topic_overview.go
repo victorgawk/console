@@ -29,7 +29,8 @@ type TopicSummary struct {
 	CleanupPolicy     string             `json:"cleanupPolicy"`
 	Documentation     DocumentationState `json:"documentation"`
 	LogDirSummary     TopicLogDirSummary `json:"logDirSummary"`
-	NumMessages       int64              `json:"numMessages"`
+	CurrentMessages   int64              `json:"currentMessages"`
+	TotalMessages     int64              `json:"totalMessages"`
 
 	// What actions the logged in user is allowed to run on this topic
 	AllowedActions []string `json:"allowedActions"`
@@ -83,16 +84,20 @@ func (s *Service) GetTopicsOverview(ctx context.Context) ([]*TopicSummary, error
 	if err != nil {
 		return nil, err
 	}
-	messagesByTopic := make(map[string]int64)
+	currentMessagesByTopic := make(map[string]int64)
+	totalMessagesByTopic := make(map[string]int64)
 	for _, topic := range metadata.Topics {
 		topicName := *topic.Topic
 		topicMarks := waterMarks[topicName]
-		topicMessages := int64(0)
+		topicCurrentMessages := int64(0)
+		topicTotalMessages := int64(0)
 		for _, partition := range topic.Partitions {
 			partitionMarks := topicMarks[partition.Partition]
-			topicMessages += partitionMarks.High - partitionMarks.Low
+			topicCurrentMessages += partitionMarks.High - partitionMarks.Low
+			topicTotalMessages += partitionMarks.High
 		}
-		messagesByTopic[topicName] = topicMessages
+		currentMessagesByTopic[topicName] = topicCurrentMessages
+		totalMessagesByTopic[topicName] = topicTotalMessages
 	}
 
 	wg.Wait()
@@ -130,7 +135,8 @@ func (s *Service) GetTopicsOverview(ctx context.Context) ([]*TopicSummary, error
 			ReplicationFactor: len(topic.Partitions[0].Replicas),
 			CleanupPolicy:     policy,
 			LogDirSummary:     logDirsByTopic[topicName],
-			NumMessages:       messagesByTopic[topicName],
+			CurrentMessages:   currentMessagesByTopic[topicName],
+			TotalMessages:     totalMessagesByTopic[topicName],
 			Documentation:     docState,
 		}
 	}

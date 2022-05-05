@@ -44,7 +44,8 @@ export interface Topic {
     cleanupPolicy: string;
     documentation: "UNKNOWN" | "NOT_CONFIGURED" | "NOT_EXISTENT" | "AVAILABLE";
     logDirSummary: TopicLogDirSummary;
-    numMessages: number;
+    currentMessages: number;
+    totalMessages: number;
     allowedActions: TopicAction[] | undefined;
 }
 

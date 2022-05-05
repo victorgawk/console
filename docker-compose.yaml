@@ -11,10 +11,26 @@ services:
       args:
         - "KOWL_GIT_SHA=8a5700c5141cac9f1b7e300008daec5d3df6187d"
         - "KOWL_GIT_REF=sisv3"
-        - "KOWL_TIMESTAMP=1651580023"
-        - "READ_ONLY=false"
+        - "KOWL_TIMESTAMP=1651778941"
     entrypoint: ./kowl --config.filepath=/etc/kowl/config.yaml
     volumes:
       - ./kowl.yaml:/etc/kowl/config.yaml
     ports:
       - "9000:9000"
+
+  kowl_readonly:
+    image: quay.io/cloudhut/kowl:sisv3_readonly
+    container_name: kowl_readonly
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - "KOWL_GIT_SHA=8a5700c5141cac9f1b7e300008daec5d3df6187d"
+        - "KOWL_GIT_REF=sisv3"
+        - "KOWL_TIMESTAMP=1651778941"
+        - "READ_ONLY=true"
+    entrypoint: ./kowl --config.filepath=/etc/kowl/config.yaml
+    volumes:
+      - ./kowl.yaml:/etc/kowl/config.yaml
+    ports:
+      - "9001:9000"
