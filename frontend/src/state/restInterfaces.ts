@@ -46,7 +46,18 @@ export interface Topic {
     logDirSummary: TopicLogDirSummary;
     currentMessages: number;
     totalMessages: number;
+    consumerGroupSummary: TopicConsumerGroupSummary;
     allowedActions: TopicAction[] | undefined;
+}
+
+export interface TopicConsumerGroupSummary {
+  maxLag: number;
+  consumerGroups: ConsumerGroupSummary[];
+}
+
+export interface ConsumerGroupSummary {
+  groupName: string;
+  lag: number;
 }
 
 export interface TopicLogDirSummary {

@@ -11,7 +11,7 @@ services:
       args:
         - "KOWL_GIT_SHA=8a5700c5141cac9f1b7e300008daec5d3df6187d"
         - "KOWL_GIT_REF=sisv3"
-        - "KOWL_TIMESTAMP=1651778941"
+        - "KOWL_TIMESTAMP=1653512541"
     entrypoint: ./kowl --config.filepath=/etc/kowl/config.yaml
     volumes:
       - ./kowl.yaml:/etc/kowl/config.yaml
@@ -27,7 +27,7 @@ services:
       args:
         - "KOWL_GIT_SHA=8a5700c5141cac9f1b7e300008daec5d3df6187d"
         - "KOWL_GIT_REF=sisv3"
-        - "KOWL_TIMESTAMP=1651778941"
+        - "KOWL_TIMESTAMP=1653512541"
         - "READ_ONLY=true"
     entrypoint: ./kowl --config.filepath=/etc/kowl/config.yaml
     volumes:

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { TrashIcon } from '@heroicons/react/outline';
 import { Alert, Button, Checkbox, Col, Modal, notification, Popover, Row, Statistic, Table, Tooltip } from 'antd';
 import { motion } from 'framer-motion';
@@ -6,7 +6,7 @@ import { autorun, computed, IReactionDisposer, makeObservable, observable } from
 import { observer } from 'mobx-react';
 import { appGlobal } from '../../../state/appGlobal';
 import { api } from '../../../state/backendApi';
-import { Topic, TopicAction, TopicActions } from '../../../state/restInterfaces';
+import { Topic, TopicAction, TopicActions, TopicConsumerGroupSummary, ConsumerGroupSummary } from '../../../state/restInterfaces';
 import { uiSettings } from '../../../state/ui';
 import { animProps } from '../../../utils/animationProps';
 import { editQuery } from '../../../utils/queryHelper';
@@ -138,13 +138,16 @@ class TopicList extends PageComponent {
                                     sorter: sortField('cleanupPolicy'),
                                 },
                                 {
-                                    title: 'Size', render: (t, r) => renderLogDirSummary(r.logDirSummary), sorter: (a, b) => a.logDirSummary.totalSizeBytes - b.logDirSummary.totalSizeBytes, width: '140px',
+                                    title: 'Size', render: (t, r) => renderLogDirSummary(r.logDirSummary), sorter: (a, b) => a.logDirSummary.totalSizeBytes - b.logDirSummary.totalSizeBytes, width: '70px',
                                 },
                                 {
                                     title: 'Current Messages', render: (t, r) => r.currentMessages, sorter: (a, b) => a.currentMessages - b.currentMessages, width: '140px',
                                 },
                                 {
                                     title: 'Total Messages', render: (t, r) => r.totalMessages, sorter: (a, b) => a.totalMessages - b.totalMessages, width: '140px',
+                                },
+                                {
+                                    title: 'Lag', render: (t, r) => renderConsumerGroupSummary(r.consumerGroupSummary), sorter: (a, b) => a.currentMessages - b.currentMessages, width: '70px',
                                 },
                                 {
                                     width: 1,
@@ -448,6 +451,23 @@ function DeleteAllRecordsDisabledTooltip(props: { children: JSX.Element }): JSX.
       </Tooltip>
   );
   return <>{IsReadOnly ? wrap(deleteButton, "Read only mode.") : deleteButton}</>;
+}
+
+function renderConsumerGroupSummary(summary: TopicConsumerGroupSummary): JSX.Element {
+  if (summary == null || summary.consumerGroups == null) return <></>;
+  const msg = QuickTable(
+      summary.consumerGroups.map((consumerGroup) => ({ key: consumerGroup.groupName + ":", value: consumerGroup.lag })),
+      {
+          keyAlign: 'right', keyStyle: { fontWeight: 500 },
+          gapWidth: 4,
+          valueAlign: 'right'
+      }
+  );
+  return <>
+    <Popover title="Consumer Groups" content={msg} placement="rightTop" overlayClassName="popoverSmall">
+      {summary.maxLag}
+    </Popover>
+  </>;
 }
 
 export default TopicList;
