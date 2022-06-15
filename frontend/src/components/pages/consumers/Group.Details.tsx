@@ -24,7 +24,6 @@ import { ShortNum } from "../../misc/ShortNum";
 import Tabs from "../../misc/tabs/Tabs";
 import AclList from "../topics/Tab.Acl/AclList";
 import { SkipIcon } from "@primer/octicons-react";
-import { IsReadOnly } from '../../../utils/env';
 
 
 @observer
@@ -542,7 +541,7 @@ const EditDisabledTooltip = (p: { group: GroupDescription, children: [editButton
     let editButtonMessage = null as string | null;
     let deleteButtonMessage = null as string | null;
 
-    if (IsReadOnly) {
+    if (uiSettings.adminOperations.readOnlyMode) {
       editButtonMessage = deleteButtonMessage = "Read only mode";
     }
 

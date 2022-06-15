@@ -148,6 +148,13 @@ const uiSettings = observable({
         maxStringLength: 200,
     },
 
+    adminOperations: {
+        autoRefreshIntervalSecs: 1,
+        readOnlyMode: true,
+        deleteAllRecordsModalVisible: false,
+        deleteAllTopicsModalVisible: false,
+    },
+
     // todo: refactor into: brokers.list, brokers.detail, topics.messages, topics.config, ...
     brokerList: {
         hideEmptyColumns: false,

@@ -1,14 +1,16 @@
-import React, { Component, ReactNode } from 'react';
+import React, { Component, ReactNode, useState } from 'react';
 import { observer } from "mobx-react";
-import { Menu, Select, Avatar, Popconfirm, Dropdown, Button, Modal, Input, message, Checkbox, InputNumber } from 'antd';
+import { Menu, Select, Avatar, Popconfirm, Dropdown, Button, Modal, Input, message, Checkbox, InputNumber, Alert, notification, Tooltip } from 'antd';
 import { uiSettings } from '../../state/ui';
 import { RenderTrap, Spacer } from './common';
 import { api } from '../../state/backendApi';
 import Icon, { UserOutlined } from '@ant-design/icons';
-import { IsBusiness } from '../../utils/env';
-import { Label } from '../../utils/tsxUtils';
+import { IsBusiness, IsProduction } from '../../utils/env';
+import { findPopupContainer, Label } from '../../utils/tsxUtils';
 import { makeObservable, observable } from 'mobx';
 import { ToolsIcon } from '@primer/octicons-react';
+import { Topic } from '../../state/restInterfaces';
+import { appGlobal } from '../../state/appGlobal';
 
 const { Option } = Select;
 type Action = () => void;
@@ -16,6 +18,7 @@ type Action = () => void;
 const settingsTabs: { name: string, component: () => ReactNode }[] = [
     { name: "Statistics Bar", component: () => <StatsBarTab /> },
     { name: "Json Viewer", component: () => <JsonViewerTab /> },
+    { name: "Admin Operations", component: () => <AdminOperationsTab /> },
 
     // pagination position
     // { name: "Message Search", component: () => <MessageSearchTab /> },
@@ -186,4 +189,290 @@ class ImportExportTab extends Component {
             </Label>
         </>;
     }
+}
+
+@observer
+class AdminOperationsTab extends Component {
+    render() {
+        return <div>
+            <p>Settings for administration</p>
+            <div style={{ display: 'inline-grid', gridAutoFlow: 'row', gridRowGap: '24px', gridColumnGap: '32px', marginRight: 'auto' }}>
+                <Label text='Read Only Mode'>
+                    <Checkbox children='Enabled' checked={uiSettings.adminOperations.readOnlyMode} onChange={e => {
+                        uiSettings.adminOperations.readOnlyMode = e.target.checked;
+                        appGlobal.onRefresh();
+                    }} />
+                </Label>
+
+                <Label text='Auto Refresh Interval (Seconds)'>
+                    <InputNumber
+                        value={uiSettings.adminOperations.autoRefreshIntervalSecs}
+                        onChange={e => {
+                            uiSettings.adminOperations.autoRefreshIntervalSecs = e;
+                            appGlobal.onRefresh();
+                        }}
+                        min={1} max={60}
+                        style={{ maxWidth: '150px' }}
+                    />
+                </Label>
+
+                {
+                    IsProduction ?
+                    <>
+                        <Label text='Delete All Records'>
+                            <DeleteDisabledTooltip>
+                                <Button
+                                    type="default"
+                                    danger
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        uiSettings.adminOperations.deleteAllRecordsModalVisible = true;
+                                    }}
+                                >
+                                    Delete All Records
+                                </Button>
+                            </DeleteDisabledTooltip>
+                        </Label>
+                        <ConfirmDeleteAllRecordsModal
+                            deleteAllRecordsVisible={uiSettings.adminOperations.deleteAllRecordsModalVisible}
+                            onCancel={() => (uiSettings.adminOperations.deleteAllRecordsModalVisible = false)}
+                            onFinish={() => {
+                                uiSettings.adminOperations.deleteAllRecordsModalVisible = false;
+                                appGlobal.onRefresh();
+                            }}
+                        />
+
+                        <Label text='Delete All Topics'>
+                            <DeleteDisabledTooltip>
+                                <Button
+                                    type="default"
+                                    danger
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        uiSettings.adminOperations.deleteAllTopicsModalVisible = true;
+                                    }}
+                                >
+                                    Delete All Topics
+                                </Button>
+                            </DeleteDisabledTooltip>
+                        </Label>
+                        <ConfirmDeleteAllTopicsModal
+                            deleteAllTopicsVisible={uiSettings.adminOperations.deleteAllTopicsModalVisible}
+                            onCancel={() => (uiSettings.adminOperations.deleteAllTopicsModalVisible = false)}
+                            onFinish={() => {
+                                uiSettings.adminOperations.deleteAllTopicsModalVisible = false;
+                                appGlobal.onRefresh();
+                            }}
+                        />
+                    </>
+                    :
+                    <>
+                    </>
+                }
+            </div>
+        </div>;
+    }
+}
+
+function DeleteDisabledTooltip(props: { children: JSX.Element }): JSX.Element {
+    const deleteButton = props.children;
+    const wrap = (button: JSX.Element, message: string) => (
+        <Tooltip placement="top" trigger="hover" mouseLeaveDelay={0} getPopupContainer={findPopupContainer} overlay={message}>
+            {React.cloneElement(button, {
+                disabled: true,
+                className: (button.props.className ?? '') + ' disabled',
+                onClick: undefined,
+            })}
+        </Tooltip>
+    );
+    return <>{uiSettings.adminOperations.readOnlyMode ? wrap(deleteButton, "Read Only Mode") : deleteButton}</>;
+}
+
+function ConfirmDeleteAllRecordsModal({ deleteAllRecordsVisible, onFinish, onCancel }: { deleteAllRecordsVisible: boolean; onFinish: () => void; onCancel: () => void }) {
+    const [deletionPending, setDeletionPending] = useState(false);
+    const [error, setError] = useState<string | Error | null>(null);
+
+    const cleanup = () => {
+        setDeletionPending(false);
+        setError(null);
+    };
+
+    const finish = (errors: Array<string>) => {
+        onFinish();
+        cleanup();
+        if (errors.length > 0) {
+            for (const error of errors) {
+                notification['error']({
+                    message: `${error}`,
+                })
+            }
+        } else {
+            notification['success']({
+                message: `Records from all topics deleted successfully`,
+            });
+        }
+    };
+
+    const cancel = () => {
+        onCancel();
+        cleanup();
+    };
+
+    return (
+        <Modal
+            className="deleteAllRecordsModal"
+            visible={deleteAllRecordsVisible}
+            centered
+            closable={false}
+            maskClosable={!deletionPending}
+            keyboard={!deletionPending}
+            okText={error ? 'Retry' : 'Yes'}
+            confirmLoading={deletionPending}
+            okType="danger"
+            cancelText="No"
+            cancelButtonProps={{ disabled: deletionPending }}
+            onCancel={cancel}
+            onOk={() => {
+                setDeletionPending(true);
+
+                api.refreshTopics();
+                api.refreshPartitions()
+                .then(() => {
+                    if (api.topics == null) {
+                        setDeletionPending(false);
+                        return Promise.resolve().then(() => {
+                            return [];
+                        });
+                    }
+                    const promises: Array<Promise<{topic: Topic; errors: Array<string>}>> = []
+                    for (const topic of api.topics) {
+                        const promise = api.deleteTopicRecordsFromAllPartitionsHighWatermark(topic.topicName).then((responseData) => {
+                            const errors: Array<string> = [];
+                            if (responseData == null) {
+                                errors.push(`Topic ${topic.topicName} doesn't have partitions.`);
+                            } else {
+                                const errorPartitions = responseData.partitions.filter((partition) => !!partition.error);
+                                if (errorPartitions.length > 0) {
+                                    errors.concat(errorPartitions.map(({ partitionId, error }) => `Topic ${topic.topicName} partition ${partitionId}: ${error}`));
+                                }
+                            }
+                            return { topic, errors };
+                        });
+                        promises.push(promise);
+                    }
+
+                    return Promise.all(promises)
+                    .then((responses) => {
+                        const errors: Array<string> = [];
+                        for (const response of responses) {
+                            errors.concat(response.errors);
+                        }
+                        return errors;
+                    })
+                })
+                .then(finish)
+                .catch(setError)
+                .finally(() => { setDeletionPending(false) });
+            }}
+        >
+            <>
+                {error && <Alert type="error" message={`An error occurred: ${typeof error === 'string' ? error : error.message}`} />}
+                <p>
+                    Are you sure you want to delete all records from all topics? This action is irrevocable.
+                </p>
+            </>
+        </Modal>
+    );
+}
+
+function ConfirmDeleteAllTopicsModal({ deleteAllTopicsVisible, onFinish, onCancel }: { deleteAllTopicsVisible: boolean; onFinish: () => void; onCancel: () => void }) {
+    const [deletionPending, setDeletionPending] = useState(false);
+    const [error, setError] = useState<string | Error | null>(null);
+
+    const cleanup = () => {
+        setDeletionPending(false);
+        setError(null);
+    };
+
+    const finish = (errors: Array<string>) => {
+        onFinish();
+        cleanup();
+        if (errors.length > 0) {
+            for (const error of errors) {
+                notification['error']({
+                    message: `${error}`,
+                })
+            }
+        } else {
+            notification['success']({
+                message: `Topics deleted successfully`,
+            });
+        }
+    };
+
+    const cancel = () => {
+        onCancel();
+        cleanup();
+    };
+
+    return (
+        <Modal
+            className="deleteAllTopicsModal"
+            visible={deleteAllTopicsVisible}
+            centered
+            closable={false}
+            maskClosable={!deletionPending}
+            keyboard={!deletionPending}
+            okText={error ? 'Retry' : 'Yes'}
+            confirmLoading={deletionPending}
+            okType="danger"
+            cancelText="No"
+            cancelButtonProps={{ disabled: deletionPending }}
+            onCancel={cancel}
+            onOk={() => {
+                setDeletionPending(true);
+
+                api.refreshTopics();
+                api.refreshPartitions()
+                .then(() => {
+                    if (api.topics == null) {
+                        setDeletionPending(false);
+                        return Promise.resolve().then(() => {
+                            return [];
+                        });
+                    }
+                    const promises: Array<Promise<{topic: Topic; errors: Array<string>}>> = []
+                    for (const topic of api.topics) {
+                        const promise = api.deleteTopic(topic.topicName).then((responseData) => {
+                            const errors: Array<string> = [];
+                            if (responseData == null) {
+                                errors.push(`Error when deleting topic ${topic.topicName}.`);
+                            }
+                            return { topic, errors };
+                        });
+                        promises.push(promise);
+                    }
+
+                    return Promise.all(promises)
+                    .then((responses) => {
+                        const errors: Array<string> = [];
+                        for (const response of responses) {
+                            errors.concat(response.errors);
+                        }
+                        return errors;
+                    })
+                })
+                .then(finish)
+                .catch(setError)
+                .finally(() => { setDeletionPending(false) });
+            }}
+        >
+            <>
+                {error && <Alert type="error" message={`An error occurred: ${typeof error === 'string' ? error : error.message}`} />}
+                <p>
+                    Are you sure you want to delete all topics? This action is irrevocable.
+                </p>
+            </>
+        </Modal>
+    );
 }

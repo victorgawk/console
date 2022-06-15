@@ -164,8 +164,6 @@ const AppSide = observer(() => (
     </Sider>
 ));
 
-
-const REFRESH_INTERVAL_SEC = 1;
 let autoRefreshActive: boolean = false;
 let refreshIntervalId: NodeJS.Timeout;
 let lastRequestCount = 0;
@@ -181,7 +179,7 @@ const DataRefreshButton = observer(() => {
     };
     const autoRefreshTextFunc = (): ReactNode => {
         return <div style={{ maxWidth: '350px' }}>
-            Enable or disable automatic refresh every <span className='codeBox'>{REFRESH_INTERVAL_SEC}s</span>.
+            Enable or disable automatic refresh every <span className='codeBox'>{uiSettings.adminOperations.autoRefreshIntervalSecs}s</span>.
         </div>;
     };
     const autoRefreshFunc = () => {
@@ -192,7 +190,7 @@ const DataRefreshButton = observer(() => {
         } else {
             autoRefreshActive = true;
             appGlobal.onRefresh();
-            refreshIntervalId = setInterval(() => { appGlobal.onRefresh() }, REFRESH_INTERVAL_SEC * 1000);
+            refreshIntervalId = setInterval(() => { appGlobal.onRefresh() }, uiSettings.adminOperations.autoRefreshIntervalSecs * 1000);
         }
     };
 

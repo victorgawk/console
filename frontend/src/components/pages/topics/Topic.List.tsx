@@ -18,14 +18,12 @@ import SearchBar from '../../misc/SearchBar';
 import { PageComponent, PageInitHelper } from '../Page';
 import { useState } from 'react';
 import { CheckIcon, CircleSlashIcon, EyeClosedIcon } from '@primer/octicons-react';
-import { IsReadOnly } from '../../../utils/env';
 
 @observer
 class TopicList extends PageComponent {
     pageConfig = makePaginationConfig(uiSettings.topicList.pageSize);
     quickSearchReaction: IReactionDisposer;
     @observable topicToDelete: null | string = null;
-    @observable deleteAllRecordsVisible: boolean = false;
 
     constructor(p: any) {
         super(p);
@@ -98,26 +96,6 @@ class TopicList extends PageComponent {
                                     <Statistic title="Total Partitions" value={partitionCountReal + partitionCountOnlyReplicated} />
                                 </div>
                             </Popover>
-                            <DeleteAllRecordsDisabledTooltip>
-                              <Button
-                                  type="default"
-                                  danger
-                                  onClick={(event) => {
-                                      event.stopPropagation();
-                                      this.deleteAllRecordsVisible = true;
-                                  }}
-                              >
-                                  Delete All Records
-                              </Button>
-                            </DeleteAllRecordsDisabledTooltip>
-                            <ConfirmDeleteAllRecordsModal
-                                deleteAllRecordsVisible={this.deleteAllRecordsVisible}
-                                onCancel={() => (this.deleteAllRecordsVisible = false)}
-                                onFinish={() => {
-                                    this.deleteAllRecordsVisible = false;
-                                    this.refreshData(true);
-                                }}
-                            />
                         </Row>
                     </Card>
 
@@ -147,7 +125,13 @@ class TopicList extends PageComponent {
                                     title: 'Total Messages', render: (t, r) => r.totalMessages, sorter: (a, b) => a.totalMessages - b.totalMessages, width: '140px',
                                 },
                                 {
-                                    title: 'Lag', render: (t, r) => renderConsumerGroupSummary(r.consumerGroupSummary), sorter: (a, b) => a.currentMessages - b.currentMessages, width: '70px',
+                                    title: 'Lag', render: (t, r) => renderConsumerGroupSummary(r.consumerGroupSummary), sorter: (a, b) => {
+                                        const maxLagA = a.consumerGroupSummary.maxLag;
+                                        const maxLagB = b.consumerGroupSummary.maxLag;
+                                        const hasConsumersA = a.consumerGroupSummary != null && a.consumerGroupSummary.consumerGroups != null;
+                                        const hasConsumersB = b.consumerGroupSummary != null && b.consumerGroupSummary.consumerGroups != null;
+                                        return (hasConsumersA ? maxLagA : -1) - (hasConsumersB ? maxLagB : -1);
+                                    }, width: '70px',
                                 },
                                 {
                                     width: 1,
@@ -319,103 +303,6 @@ function ConfirmDeletionModal({ topicToDelete, onFinish, onCancel }: { topicToDe
     );
 }
 
-function ConfirmDeleteAllRecordsModal({ deleteAllRecordsVisible, onFinish, onCancel }: { deleteAllRecordsVisible: boolean; onFinish: () => void; onCancel: () => void }) {
-    const [deletionPending, setDeletionPending] = useState(false);
-    const [error, setError] = useState<string | Error | null>(null);
-
-    const cleanup = () => {
-        setDeletionPending(false);
-        setError(null);
-    };
-
-    const finish = (errors: Array<string>) => {
-        onFinish();
-        cleanup();
-        if (errors.length > 0) {
-            for (const error of errors) {
-                notification['error']({
-                    message: `${error}`,
-                })
-            }
-        } else {
-            notification['success']({
-                message: `Records from all topics deleted successfully`,
-            });
-        }
-    };
-
-    const cancel = () => {
-        onCancel();
-        cleanup();
-    };
-
-    return (
-        <Modal
-            className="deleteAllRecordsModal"
-            visible={deleteAllRecordsVisible}
-            centered
-            closable={false}
-            maskClosable={!deletionPending}
-            keyboard={!deletionPending}
-            okText={error ? 'Retry' : 'Yes'}
-            confirmLoading={deletionPending}
-            okType="danger"
-            cancelText="No"
-            cancelButtonProps={{ disabled: deletionPending }}
-            onCancel={cancel}
-            onOk={() => {
-                setDeletionPending(true);
-
-                api.refreshTopics();
-                api.refreshPartitions()
-                .then(() => {
-                    if (api.topics == null) {
-                        setDeletionPending(false);
-                        return Promise.resolve().then(() => {
-                            return [];
-                        });
-                    }
-                    const promises: Array<Promise<{topic: Topic; errors: Array<string>}>> = []
-                    for (const topic of api.topics) {
-                        const promise = api.deleteTopicRecordsFromAllPartitionsHighWatermark(topic.topicName).then((responseData) => {
-                            const errors: Array<string> = [];
-                            if (responseData == null) {
-                                errors.push(`Topic ${topic.topicName} doesn't have partitions.`);
-                            } else {
-                                const errorPartitions = responseData.partitions.filter((partition) => !!partition.error);
-                                if (errorPartitions.length > 0) {
-                                    errors.concat(errorPartitions.map(({ partitionId, error }) => `Topic ${topic.topicName} partition ${partitionId}: ${error}`));
-                                }
-                            }
-                            return { topic, errors };
-                        });
-                        promises.push(promise);
-                    }
-
-                    return Promise.all(promises)
-                    .then((responses) => {
-                        const errors: Array<string> = [];
-                        for (const response of responses) {
-                            errors.concat(response.errors);
-                        }
-                        return errors;
-                    })
-                })
-                .then(finish)
-                .catch(setError)
-                .finally(() => { setDeletionPending(false) });
-            }}
-        >
-            <>
-                {error && <Alert type="error" message={`An error occurred: ${typeof error === 'string' ? error : error.message}`} />}
-                <p>
-                    Are you sure you want to delete all records from all topics? This action is irrevocable.
-                </p>
-            </>
-        </Modal>
-    );
-}
-
 function DeleteDisabledTooltip(props: { topic: Topic; children: JSX.Element }): JSX.Element {
     const { topic } = props;
     const deleteButton = props.children;
@@ -430,27 +317,13 @@ function DeleteDisabledTooltip(props: { topic: Topic; children: JSX.Element }): 
         </Tooltip>
     );
 
-    if (IsReadOnly) return <>{wrap(deleteButton, "Read only mode.")}</>;
+    if (uiSettings.adminOperations.readOnlyMode) return <>{wrap(deleteButton, "Read only mode.")}</>;
 
     return <>{hasDeletePrivilege(topic.allowedActions) ? deleteButton : wrap(deleteButton, "You don't have 'deleteTopic' permission for this topic.")}</>;
 }
 
 function hasDeletePrivilege(allowedActions?: Array<TopicAction>) {
     return Boolean(allowedActions?.includes('all') || allowedActions?.includes('deleteTopic'));
-}
-
-function DeleteAllRecordsDisabledTooltip(props: { children: JSX.Element }): JSX.Element {
-  const deleteButton = props.children;
-  const wrap = (button: JSX.Element, message: string) => (
-      <Tooltip placement="top" trigger="hover" mouseLeaveDelay={0} getPopupContainer={findPopupContainer} overlay={message}>
-          {React.cloneElement(button, {
-              disabled: true,
-              className: (button.props.className ?? '') + ' disabled',
-              onClick: undefined,
-          })}
-      </Tooltip>
-  );
-  return <>{IsReadOnly ? wrap(deleteButton, "Read only mode.") : deleteButton}</>;
 }
 
 function renderConsumerGroupSummary(summary: TopicConsumerGroupSummary): JSX.Element {

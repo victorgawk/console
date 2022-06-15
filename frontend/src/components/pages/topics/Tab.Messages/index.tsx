@@ -19,7 +19,7 @@ import Editor from 'react-simple-code-editor';
 import { format as formatUrl, parse as parseUrl } from "url";
 import { api } from "../../../../state/backendApi";
 import { Payload, Topic, TopicAction, TopicMessage } from "../../../../state/restInterfaces";
-import { ColumnList, FilterEntry, PreviewTagV2, TopicOffsetOrigin } from "../../../../state/ui";
+import { ColumnList, FilterEntry, PreviewTagV2, TopicOffsetOrigin, uiSettings } from "../../../../state/ui";
 import { uiState } from "../../../../state/uiState";
 import { animProps_span_messagesStatus, MotionDiv, MotionSpan } from "../../../../utils/animationProps";
 import '../../../../utils/arrayExtensions';
@@ -40,7 +40,6 @@ import filterExample2 from '../../../../assets/filter-example-2.png';
 import { getPreviewTags, PreviewSettings } from './PreviewSettings';
 import * as moment from 'moment';
 import DeleteRecordsModal from '../DeleteRecordsModal/DeleteRecordsModal';
-import { IsReadOnly } from '../../../../utils/env';
 
 
 
@@ -1435,7 +1434,7 @@ function DeleteRecordsButton({
                 <Button disabled>Delete Records</Button>
             </Tooltip>
         );
-    } else if (IsReadOnly) {
+    } else if (uiSettings.adminOperations.readOnlyMode) {
         return (
             <Tooltip placement="top" title="Read only mode.">
                 <Button disabled>Delete Records</Button>
