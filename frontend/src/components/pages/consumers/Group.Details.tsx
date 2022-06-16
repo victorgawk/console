@@ -541,10 +541,6 @@ const EditDisabledTooltip = (p: { group: GroupDescription, children: [editButton
     let editButtonMessage = null as string | null;
     let deleteButtonMessage = null as string | null;
 
-    if (uiSettings.adminOperations.readOnlyMode) {
-      editButtonMessage = deleteButtonMessage = "Read only mode";
-    }
-
     if (group.noEditPerms) editButtonMessage = "You don't have 'editConsumerGroup' permissions for this group";
     if (group.noDeletePerms) deleteButtonMessage = "You don't have 'deleteConsumerGroup' permissions for this group";
 

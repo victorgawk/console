@@ -317,7 +317,7 @@ function DeleteDisabledTooltip(props: { topic: Topic; children: JSX.Element }): 
         </Tooltip>
     );
 
-    if (uiSettings.adminOperations.readOnlyMode) return <>{wrap(deleteButton, "Read only mode.")}</>;
+    if (!uiSettings.topics.enableDeleteButton) return <>{wrap(deleteButton, "Disabled.")}</>;
 
     return <>{hasDeletePrivilege(topic.allowedActions) ? deleteButton : wrap(deleteButton, "You don't have 'deleteTopic' permission for this topic.")}</>;
 }

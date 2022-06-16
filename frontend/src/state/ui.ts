@@ -147,10 +147,12 @@ const uiSettings = observable({
         lineHeight: '1em',
         maxStringLength: 200,
     },
-
-    adminOperations: {
-        autoRefreshIntervalSecs: 1,
-        readOnlyMode: true,
+    jsonParser: {
+        parseJava: true,
+    },
+    autoRefreshIntervalSecs: 1,
+    topics: {
+        enableDeleteButton: false,
         deleteAllRecordsModalVisible: false,
         deleteAllTopicsModalVisible: false,
     },

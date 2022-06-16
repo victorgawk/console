@@ -27,6 +27,7 @@ type ListMessagesRequest struct {
 	PartitionID           int32  `json:"partitionId"`    // -1 for all partition ids
 	MaxResults            int    `json:"maxResults"`
 	FilterInterpreterCode string `json:"filterInterpreterCode"` // Base64 encoded code
+	ParseJava             bool   `json:"parseJava"`
 }
 
 func (l *ListMessagesRequest) OK() error {
@@ -140,6 +141,7 @@ func (api *API) handleGetMessages() http.HandlerFunc {
 			StartTimestamp:        req.StartTimestamp,
 			MessageCount:          req.MaxResults,
 			FilterInterpreterCode: interpreterCode,
+			ParseJava:             req.ParseJava,
 		}
 		api.Hooks.Owl.PrintListMessagesAuditLog(r, &listReq)
 

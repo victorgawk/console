@@ -18,7 +18,8 @@ type Action = () => void;
 const settingsTabs: { name: string, component: () => ReactNode }[] = [
     { name: "Statistics Bar", component: () => <StatsBarTab /> },
     { name: "Json Viewer", component: () => <JsonViewerTab /> },
-    { name: "Admin Operations", component: () => <AdminOperationsTab /> },
+    { name: "Auto Refresh", component: () => <AutoRefreshTab /> },
+    { name: "Topics", component: () => <TopicsTab /> },
 
     // pagination position
     // { name: "Message Search", component: () => <MessageSearchTab /> },
@@ -139,6 +140,11 @@ class JsonViewerTab extends Component {
                 <Label text='Maximum string length before collapsing'>
                     <InputNumber value={settings.maxStringLength} onChange={e => settings.maxStringLength = e} min={0} max={10000} style={{ maxWidth: '150px' }} />
                 </Label>
+                <Label text='Parse Java'>
+                    <Checkbox children='Enabled' checked={uiSettings.jsonParser.parseJava} onChange={e => {
+                        uiSettings.jsonParser.parseJava = e.target.checked;
+                    }} />
+                </Label>
             </div>
         </div>;
     }
@@ -192,33 +198,47 @@ class ImportExportTab extends Component {
 }
 
 @observer
-class AdminOperationsTab extends Component {
+class AutoRefreshTab extends Component {
     render() {
-        return <div>
-            <p>Settings for administration</p>
-            <div style={{ display: 'inline-grid', gridAutoFlow: 'row', gridRowGap: '24px', gridColumnGap: '32px', marginRight: 'auto' }}>
-                <Label text='Read Only Mode'>
-                    <Checkbox children='Enabled' checked={uiSettings.adminOperations.readOnlyMode} onChange={e => {
-                        uiSettings.adminOperations.readOnlyMode = e.target.checked;
-                        appGlobal.onRefresh();
-                    }} />
-                </Label>
+        const settings = uiSettings.jsonViewer;
 
+        return <div>
+            <div style={{ display: 'inline-grid', gridAutoFlow: 'row', gridRowGap: '24px', gridColumnGap: '32px', marginRight: 'auto' }}>
                 <Label text='Auto Refresh Interval (Seconds)'>
                     <InputNumber
-                        value={uiSettings.adminOperations.autoRefreshIntervalSecs}
+                        value={uiSettings.autoRefreshIntervalSecs}
                         onChange={e => {
-                            uiSettings.adminOperations.autoRefreshIntervalSecs = e;
+                            uiSettings.autoRefreshIntervalSecs = e;
                             appGlobal.onRefresh();
                         }}
                         min={1} max={60}
                         style={{ maxWidth: '150px' }}
                     />
                 </Label>
+            </div>
+        </div>;
+    }
+}
+
+@observer
+class TopicsTab extends Component {
+    render() {
+        const settings = uiSettings.jsonViewer;
+
+        return <div>
+            <p>Settings for the JsonViewer</p>
+
+            <div style={{ display: 'inline-grid', gridAutoFlow: 'row', gridRowGap: '24px', gridColumnGap: '32px', marginRight: 'auto' }}>
+                <Label text='Delete Buttons'>
+                    <Checkbox children='Enabled' checked={uiSettings.topics.enableDeleteButton} onChange={e => {
+                        uiSettings.topics.enableDeleteButton = e.target.checked;
+                        appGlobal.onRefresh();
+                    }} />
+                </Label>
 
                 {
-                    IsProduction ?
-                    <>
+                    IsProduction ? <></>
+                    : <>
                         <Label text='Delete All Records'>
                             <DeleteDisabledTooltip>
                                 <Button
@@ -226,7 +246,7 @@ class AdminOperationsTab extends Component {
                                     danger
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        uiSettings.adminOperations.deleteAllRecordsModalVisible = true;
+                                        uiSettings.topics.deleteAllRecordsModalVisible = true;
                                     }}
                                 >
                                     Delete All Records
@@ -234,10 +254,10 @@ class AdminOperationsTab extends Component {
                             </DeleteDisabledTooltip>
                         </Label>
                         <ConfirmDeleteAllRecordsModal
-                            deleteAllRecordsVisible={uiSettings.adminOperations.deleteAllRecordsModalVisible}
-                            onCancel={() => (uiSettings.adminOperations.deleteAllRecordsModalVisible = false)}
+                            deleteAllRecordsVisible={uiSettings.topics.deleteAllRecordsModalVisible}
+                            onCancel={() => (uiSettings.topics.deleteAllRecordsModalVisible = false)}
                             onFinish={() => {
-                                uiSettings.adminOperations.deleteAllRecordsModalVisible = false;
+                                uiSettings.topics.deleteAllRecordsModalVisible = false;
                                 appGlobal.onRefresh();
                             }}
                         />
@@ -249,7 +269,7 @@ class AdminOperationsTab extends Component {
                                     danger
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        uiSettings.adminOperations.deleteAllTopicsModalVisible = true;
+                                        uiSettings.topics.deleteAllTopicsModalVisible = true;
                                     }}
                                 >
                                     Delete All Topics
@@ -257,16 +277,13 @@ class AdminOperationsTab extends Component {
                             </DeleteDisabledTooltip>
                         </Label>
                         <ConfirmDeleteAllTopicsModal
-                            deleteAllTopicsVisible={uiSettings.adminOperations.deleteAllTopicsModalVisible}
-                            onCancel={() => (uiSettings.adminOperations.deleteAllTopicsModalVisible = false)}
+                            deleteAllTopicsVisible={uiSettings.topics.deleteAllTopicsModalVisible}
+                            onCancel={() => (uiSettings.topics.deleteAllTopicsModalVisible = false)}
                             onFinish={() => {
-                                uiSettings.adminOperations.deleteAllTopicsModalVisible = false;
+                                uiSettings.topics.deleteAllTopicsModalVisible = false;
                                 appGlobal.onRefresh();
                             }}
                         />
-                    </>
-                    :
-                    <>
                     </>
                 }
             </div>
@@ -285,7 +302,7 @@ function DeleteDisabledTooltip(props: { children: JSX.Element }): JSX.Element {
             })}
         </Tooltip>
     );
-    return <>{uiSettings.adminOperations.readOnlyMode ? wrap(deleteButton, "Read Only Mode") : deleteButton}</>;
+    return <>{uiSettings.topics.enableDeleteButton ? deleteButton : wrap(deleteButton, "Disabled.")}</>;
 }
 
 function ConfirmDeleteAllRecordsModal({ deleteAllRecordsVisible, onFinish, onCancel }: { deleteAllRecordsVisible: boolean; onFinish: () => void; onCancel: () => void }) {

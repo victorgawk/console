@@ -638,6 +638,7 @@ function ${name}() {
             startTimestamp: searchParams.startTimestamp,
             maxResults: searchParams.maxResults,
             filterInterpreterCode: btoa(sanitizeString(filterCode)),
+            parseJava: uiSettings.jsonParser.parseJava,
         };
 
         // if (typeof searchParams.startTimestamp != 'number' || searchParams.startTimestamp == 0)
@@ -1434,9 +1435,9 @@ function DeleteRecordsButton({
                 <Button disabled>Delete Records</Button>
             </Tooltip>
         );
-    } else if (uiSettings.adminOperations.readOnlyMode) {
+    } else if (!uiSettings.topics.enableDeleteButton) {
         return (
-            <Tooltip placement="top" title="Read only mode.">
+            <Tooltip placement="top" title="Disabled.">
                 <Button disabled>Delete Records</Button>
             </Tooltip>
         );

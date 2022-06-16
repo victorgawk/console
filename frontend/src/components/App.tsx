@@ -179,7 +179,7 @@ const DataRefreshButton = observer(() => {
     };
     const autoRefreshTextFunc = (): ReactNode => {
         return <div style={{ maxWidth: '350px' }}>
-            Enable or disable automatic refresh every <span className='codeBox'>{uiSettings.adminOperations.autoRefreshIntervalSecs}s</span>.
+            Enable or disable automatic refresh every <span className='codeBox'>{uiSettings.autoRefreshIntervalSecs}s</span>.
         </div>;
     };
     const autoRefreshFunc = () => {
@@ -190,7 +190,7 @@ const DataRefreshButton = observer(() => {
         } else {
             autoRefreshActive = true;
             appGlobal.onRefresh();
-            refreshIntervalId = setInterval(() => { appGlobal.onRefresh() }, uiSettings.adminOperations.autoRefreshIntervalSecs * 1000);
+            refreshIntervalId = setInterval(() => { appGlobal.onRefresh() }, uiSettings.autoRefreshIntervalSecs * 1000);
         }
     };
 

@@ -66,6 +66,7 @@ type TopicConsumeRequest struct {
 	MaxMessageCount       int
 	Partitions            map[int32]*PartitionConsumeRequest
 	FilterInterpreterCode string
+	ParseJava             bool
 }
 
 type interpreterArguments struct {
@@ -116,7 +117,7 @@ func (s *Service) FetchMessages(ctx context.Context, progress IListMessagesProgr
 		}
 
 		wg.Add(1)
-		go s.startMessageWorker(workerCtx, &wg, isMessageOK, jobs, resultsCh)
+		go s.startMessageWorker(workerCtx, &wg, isMessageOK, jobs, resultsCh, consumeReq.ParseJava)
 	}
 	// Close the results channel once all workers have finished processing jobs and therefore no senders are left anymore
 	go func() {

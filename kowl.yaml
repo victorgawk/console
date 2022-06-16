@@ -5,4 +5,4 @@ server:
   listenPort: 9000
 
 logger:
-  level: debug
+  level: info
