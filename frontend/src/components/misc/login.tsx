@@ -56,7 +56,9 @@ class Login extends Component {
             this.providersResponse = await getProviders();
         } catch (err) {
             this.providersResponse = null;
-            this.providersError = err.toString();
+            if (err instanceof Error) {
+                this.providersError = err.toString();
+            }
         }
     }
 

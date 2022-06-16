@@ -18,7 +18,7 @@ services:
     ports:
       - "9000:9000"
 
-  kowl_readonly:
+  kowl_production:
     image: quay.io/cloudhut/kowl:sisv3_production
     container_name: kowl_production
     build:
@@ -28,7 +28,7 @@ services:
         - "KOWL_GIT_SHA=8a5700c5141cac9f1b7e300008daec5d3df6187d"
         - "KOWL_GIT_REF=sisv3"
         - "KOWL_TIMESTAMP=1655301093"
-        - "KOWL_PRODUCTION=true"
+        - "PRODUCTION=true"
     entrypoint: ./kowl --config.filepath=/etc/kowl/config.yaml
     volumes:
       - ./kowl.yaml:/etc/kowl/config.yaml

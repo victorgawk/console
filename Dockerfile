@@ -18,14 +18,14 @@ RUN CGO_ENABLED=0 go build -o ./bin/kowl ./cmd/api
 ############################################################
 # Frontend Build
 ############################################################
-FROM node:17-alpine as frontendBuilder
+FROM node:16.13-alpine as frontendBuilder
 
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
 
 COPY ./frontend/package.json ./package.json
 COPY ./frontend/package-lock.json ./package-lock.json
-RUN npm install
+RUN npm ci
 
 
 # From: https://docs.docker.com/engine/reference/builder/#using-arg-variables
