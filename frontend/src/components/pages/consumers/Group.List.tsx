@@ -138,13 +138,13 @@ class GroupList extends PageComponent {
                         title: 'ID',
                         dataIndex: 'groupId',
                         sorter: sortField('groupId'),
-                        filteredValue: [tableSettings.quickSearch],
-                        onFilter: (filterValue, record: GroupDescription) =>
-                          !filterValue ||
-                          containsIgnoreCase(
-                            record.groupId,
-                            String(filterValue)
-                          ),
+                        // filteredValue: [tableSettings.quickSearch],
+                        // onFilter: (filterValue, record: GroupDescription) =>
+                        //   !filterValue ||
+                        //   containsIgnoreCase(
+                        //     record.groupId,
+                        //     String(filterValue)
+                        //   ),
                         render: (t, r) => <this.GroupId group={r} />,
                         className: 'whiteSpaceDefault',
                       },
@@ -170,6 +170,13 @@ class GroupList extends PageComponent {
                         sorter: (a, b) => a.lagSum - b.lagSum,
                       },
                     ]}
+                    search={{
+                      isRowMatch: (row, regex) => {
+                        if (regex.test(row.groupId)) return true;
+                        // if (regex.test(row.state)) return true;
+                        return false;
+                      },
+                    }}
                     observableSettings={tableSettings}
                     rowKey={(x) => x.groupId}
                     rowClassName="hoverLink"
@@ -185,7 +192,7 @@ class GroupList extends PageComponent {
     }
 
     SearchBar = observer(() => {
-        return <Input allowClear={true} placeholder="Quick Search" size="large" style={{ width: '350px' }}
+        return <Input allowClear={true} placeholder="Enter search term/regex" size="large" style={{ width: '350px' }}
             onChange={e => uiSettings.consumerGroupList.quickSearch = e.target.value}
             value={uiSettings.consumerGroupList.quickSearch}
         />

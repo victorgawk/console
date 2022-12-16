@@ -147,6 +147,10 @@ const defaultUiSettings = {
         lineHeight: '1em',
         maxStringLength: 200,
     },
+    parseJavaToJson: true,
+    enableTopicOperations: false,
+    _deleteAllRecordsModalVisible: false,
+    _deleteAllTopicsModalVisible: false,
 
     // todo: refactor into: brokers.list, brokers.detail, topics.messages, topics.config, ...
     brokerList: {

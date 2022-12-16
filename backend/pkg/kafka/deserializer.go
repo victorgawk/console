@@ -99,7 +99,7 @@ type deserializedRecord struct {
 //  - UTF-8 Text
 //  - Binary content
 // Idea: Add encoding hint where user can suggest the backend to test this encoding first.
-func (d *deserializer) DeserializeRecord(record *kgo.Record) *deserializedRecord {
+func (d *deserializer) DeserializeRecord(record *kgo.Record, parseJavaToJson bool) *deserializedRecord {
 	// 1. Test if it's a known binary Format
 	if record.Topic == "__consumer_offsets" {
 		rec, err := d.deserializeConsumerOffset(record)
@@ -108,15 +108,36 @@ func (d *deserializer) DeserializeRecord(record *kgo.Record) *deserializedRecord
 		}
 	}
 
+	if parseJavaToJson {
+		if record.Topic != "event-in" && record.Topic != "event-out" && record.Topic != "online-connector" && record.Topic != "online-connector-out" {
+			obj, err := ParseBase64ToMarshal(record.Value)
+			if err == nil {
+				record.Value = obj
+			}
+		}
+	}
+
 	headers := make(map[string]*deserializedPayload)
 	for _, header := range record.Headers {
 		headers[header.Key] = d.deserializePayload(header.Value, record.Topic, proto.RecordValue)
 	}
-	return &deserializedRecord{
+
+	deserializedRecord := &deserializedRecord{
 		Key:     d.deserializePayload(record.Key, record.Topic, proto.RecordKey),
 		Value:   d.deserializePayload(record.Value, record.Topic, proto.RecordValue),
 		Headers: headers,
 	}
+
+	if parseJavaToJson {
+		if record.Topic == "online-connector-out" {
+			obj, err := ParseBase64ToObject(record.Value)
+			if err == nil {
+				deserializedRecord.Value.Payload.Payload = []byte(fmt.Sprint(obj))
+			}
+		}
+	}
+
+	return deserializedRecord
 }
 
 func (d *deserializer) deserializePayload(payload []byte, topicName string, recordType proto.RecordPropertyType) *deserializedPayload {

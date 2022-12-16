@@ -159,17 +159,17 @@ export const setup = memoizeOne((setupArgs: SetConfigArguments) => {
     // Get supported endpoints / kafka cluster version
     // In the business version, that endpoint (like any other api endpoint) is
     // protected, so we need to delay the call until the user is logged in.
-    if (!AppFeatures.SINGLE_SIGN_ON) {
-        api.refreshSupportedEndpoints();
-    } else {
-        when(
-            () => Boolean(api.userData),
-            () => {
-                setTimeout(() => {
-                    api.refreshSupportedEndpoints();
-                });
-            }
-        );
-    }
+    // if (!AppFeatures.SINGLE_SIGN_ON) {
+    //     api.refreshSupportedEndpoints();
+    // } else {
+    //     when(
+    //         () => Boolean(api.userData),
+    //         () => {
+    //             setTimeout(() => {
+    //                 api.refreshSupportedEndpoints();
+    //             });
+    //         }
+    //     );
+    // }
 });
 

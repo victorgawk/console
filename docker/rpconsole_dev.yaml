@@ -1,0 +1,10 @@
+# comando para rodar o backend (dentro da pasta do backend)
+# go run -v cmd\api\main.go --config.filepath=../docker/rpconsole_dev.yaml
+kafka:
+  brokers:
+    - localhost:9092
+server:
+  listenPort: 9090
+logger:
+  level: debug
+serveFrontend: false

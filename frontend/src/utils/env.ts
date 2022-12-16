@@ -19,6 +19,7 @@ const envNames = [
     'REACT_APP_CONSOLE_GIT_REF', // 'master' or 'v1.2.3'
     'REACT_APP_BUILD_TIMESTAMP',
     'REACT_APP_CONSOLE_PLATFORM_VERSION',
+    'REACT_APP_SHOW_BULK_DELETE_BUTTONS',
 
     'REACT_APP_BUILT_FROM_PUSH', // was built by 'image-on-push'?
 
@@ -41,6 +42,7 @@ const isDev = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') 
 export const IsProd = !isDev;
 export const IsDev = isDev;
 export const IsCI = env.REACT_APP_BUILT_FROM_PUSH && env.REACT_APP_BUILT_FROM_PUSH != 'false';
+export const ShowBulkDeleteButtons = Boolean(env.REACT_APP_SHOW_BULK_DELETE_BUTTONS);
 
 const appFeatureNames = [
     'SINGLE_SIGN_ON',

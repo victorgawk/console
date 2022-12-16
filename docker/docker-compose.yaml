@@ -1,0 +1,19 @@
+version: '2.4'
+
+services:
+
+  rpconsole:
+    image: victorferreirasquadra/rpconsole
+    container_name: rpconsole
+    build:
+      context: ../.
+      dockerfile: docker/Dockerfile
+      args:
+        - "GIT_SHA=012cbf4384a41b8a83a51e70b74326d78028b908"
+        - "GIT_REF=custom"
+        - "BUILD_TIMESTAMP=1671222236"
+        - "SHOW_BULK_DELETE_BUTTONS=true"
+    volumes:
+      - ./rpconsole.yaml:/etc/rpconsole/config.yaml
+    ports:
+      - "9000:9000"

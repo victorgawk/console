@@ -451,7 +451,7 @@ class GroupByMembers extends Component<{ group: GroupDescription, onlyShowPartit
                         <div>
                             <span style={{ fontWeight: 600, fontSize: '1.1em' }}>{renderMergedID(m.id, m.clientId)}</span>
                             <Tooltip placement="top" title="Host of the member" mouseEnterDelay={0} getPopupContainer={findPopupContainer}>
-                                <Tag style={{ marginLeft: '1em' }} color="blue">host: {m.clientHost}</Tag>
+                                <Tag style={{ marginLeft: '1em' }} color="rgb(225, 66, 38)">host: {m.clientHost}</Tag>
                             </Tooltip>
                             <Tooltip placement="top" title="Number of assigned partitions" mouseEnterDelay={0} getPopupContainer={findPopupContainer}>
                                 <Tag color="rgb(225, 66, 38)">partitions: {totalPartitions}</Tag>

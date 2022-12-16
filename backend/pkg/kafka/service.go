@@ -61,18 +61,18 @@ func NewService(cfg *config.Config, logger *zap.Logger, metricsNamespace string)
 	// Ensure Kafka connection works, otherwise fail fast. Allow up to 5 retries with exponentially increasing backoff.
 	// Retries with backoff is very helpful in environments where Console concurrently starts with the Kafka target,
 	// such as a docker-compose demo.
-	retries := 5
-	backoffDuration := 1 * time.Second
-	for retries > 0 {
+	// retries := 5
+	backoffDuration := 5 * time.Second
+	for {
 		err = testConnection(logger, kafkaClient, time.Second*15)
 		if err == nil {
 			break
 		}
 		logger.Warn(fmt.Sprintf("Failed to test Kafka connection, going to retry in %vs",
-			backoffDuration.Seconds()), zap.Int("remaining_retries", retries))
+			backoffDuration.Seconds()))
 		time.Sleep(backoffDuration)
-		backoffDuration *= 2
-		retries--
+		// backoffDuration *= 2
+		// retries--
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to test kafka connection: %w", err)

@@ -26,7 +26,7 @@ import filterExample2 from '../../../../assets/filter-example-2.png';
 import { api } from '../../../../state/backendApi';
 import { CompressionType, compressionTypeToNum, EncodingType, Payload, PublishRecord, Topic, TopicAction, TopicMessage } from '../../../../state/restInterfaces';
 import { Feature, isSupported } from '../../../../state/supportedFeatures';
-import { ColumnList, FilterEntry, PreviewTagV2, PartitionOffsetOrigin } from '../../../../state/ui';
+import { ColumnList, FilterEntry, PreviewTagV2, PartitionOffsetOrigin, uiSettings } from '../../../../state/ui';
 import { uiState } from '../../../../state/uiState';
 import { AnimatePresence, animProps_span_messagesStatus, MotionDiv, MotionSpan } from '../../../../utils/animationProps';
 import '../../../../utils/arrayExtensions';
@@ -273,8 +273,8 @@ export class TopicMessageView extends Component<TopicMessageViewProps> {
                 {/* Topic Actions */}
                 <div className={styles.topicActionsWrapper}>
                     <Dropdown trigger={['click']} overlay={<Menu>
-                        <Menu.Item key="1" onClick={() => this.showPublishRecordsModal({ topicName: this.props.topic.topicName })}>
-                            Publish Message
+                        <Menu.Item key="1" onClick={() => this.showPublishRecordsModal({ topicName: this.props.topic.topicName })} disabled={!uiSettings.enableTopicOperations}>
+                            {uiSettings.enableTopicOperations ? 'Publish Message' : <Tooltip placement="top" title="Disabled.">Publish Message</Tooltip>}
                         </Menu.Item>
                         {DeleteRecordsMenuItem('2', isCompacted, topic.allowedActions ?? [], () => this.deleteRecordsModalAlive = this.deleteRecordsModalVisible = true)}
                     </Menu>}>
@@ -449,8 +449,8 @@ export class TopicMessageView extends Component<TopicMessageViewProps> {
                 render: (_text, record) => !record.isValueNull && (
                     <NoClipboardPopover placement="left">
                         <div> {/* the additional div is necessary because popovers do not trigger on disabled elements, even on hover */}
-                            <Dropdown disabled={!isClipboardAvailable} overlayClassName="disableAnimation" overlay={this.copyDropdown(record)} trigger={['click']}>
-                                <Button className="iconButton" style={{ height: '100%', width: '100%', verticalAlign: 'middle', pointerEvents: isClipboardAvailable ? 'auto' : 'none' }} type="link"
+                            <Dropdown overlayClassName="disableAnimation" overlay={this.copyDropdown(record)} trigger={['click']}>
+                                <Button className="iconButton" style={{ height: '100%', width: '100%', verticalAlign: 'middle', pointerEvents: 'auto'}} type="link"
                                     icon={<EllipsisOutlined style={{ fontSize: '32px', display: 'flex', alignContent: 'center', justifyContent: 'center' }} />} size="middle" />
                             </Dropdown>
                         </div>
@@ -560,13 +560,13 @@ export class TopicMessageView extends Component<TopicMessageViewProps> {
 
     copyDropdown = (record: TopicMessage) => (
         <Menu>
-            <Menu.Item key="0" onClick={() => copyMessage(record, 'jsonKey')}>
+            <Menu.Item disabled={!isClipboardAvailable} key="0" onClick={() => copyMessage(record, 'jsonKey')}>
                 Copy Key
             </Menu.Item>
-            <Menu.Item key="2" onClick={() => copyMessage(record, 'jsonValue')}>
+            <Menu.Item disabled={!isClipboardAvailable} key="2" onClick={() => copyMessage(record, 'jsonValue')}>
                 Copy Value
             </Menu.Item>
-            <Menu.Item key="4" onClick={() => copyMessage(record, 'timestamp')}>
+            <Menu.Item disabled={!isClipboardAvailable} key="4" onClick={() => copyMessage(record, 'timestamp')}>
                 Copy Epoch Timestamp
             </Menu.Item>
             <Menu.Item key="5" onClick={() => this.downloadMessages = [record]}>
@@ -615,6 +615,7 @@ export class TopicMessageView extends Component<TopicMessageViewProps> {
             startTimestamp: searchParams.startTimestamp,
             maxResults: searchParams.maxResults,
             filterInterpreterCode: encodeBase64(sanitizeString(filterCode)),
+            parseJavaToJson: uiSettings.parseJavaToJson,
         };
 
         // if (typeof searchParams.startTimestamp != 'number' || searchParams.startTimestamp == 0)
@@ -1402,10 +1403,12 @@ function hasDeleteRecordsPrivilege(allowedActions: Array<TopicAction>) {
 }
 
 function DeleteRecordsMenuItem(key: string, isCompacted: boolean, allowedActions: Array<TopicAction>, onClick: () => void,) {
-    const isEnabled = !isCompacted && hasDeleteRecordsPrivilege(allowedActions) && isSupported(Feature.DeleteRecords);
+    const isEnabled = !isCompacted && uiSettings.enableTopicOperations && hasDeleteRecordsPrivilege(allowedActions) && isSupported(Feature.DeleteRecords);
 
     let errorText: string | undefined;
-    if (isCompacted)
+    if (!uiSettings.enableTopicOperations)
+        errorText = 'Disabled.';
+    else if (isCompacted)
         errorText = 'Records on Topics with the \'compact\' cleanup policy cannot be deleted.';
     else if (!hasDeleteRecordsPrivilege(allowedActions))
         errorText = 'You\'re not permitted to delete records on this topic.';

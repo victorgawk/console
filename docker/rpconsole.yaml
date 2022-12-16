@@ -1,0 +1,5 @@
+kafka:
+  brokers:
+    - host.docker.internal:29092
+server:
+  listenPort: 9000

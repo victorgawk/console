@@ -44,6 +44,7 @@ type ListMessageRequest struct {
 	StartTimestamp        int64 // Start offset by unix timestamp in ms
 	MessageCount          int
 	FilterInterpreterCode string
+	ParseJavaToJson       bool
 }
 
 // ListMessageResponse returns the requested kafka messages along with some metadata about the operation
@@ -127,6 +128,7 @@ func (s *Service) ListMessages(ctx context.Context, listReq ListMessageRequest, 
 		MaxMessageCount:       listReq.MessageCount,
 		Partitions:            consumeRequests,
 		FilterInterpreterCode: listReq.FilterInterpreterCode,
+		ParseJavaToJson:       listReq.ParseJavaToJson,
 	}
 
 	progress.OnPhase("Consuming messages")
