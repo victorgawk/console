@@ -358,7 +358,7 @@ function ClusterDetails() {
         </DetailsBlock>
 
 
-        <DetailsBlock title="Security" >
+        {/* <DetailsBlock title="Security" >
             <Details title="Service Accounts" content={[
                 [<Link key={0} as={ReactRouterLink} to="/acls/">{serviceAccounts}</Link>]
             ]} />
@@ -366,7 +366,7 @@ function ClusterDetails() {
             <Details title="ACLs" content={[
                 [<Link key={0} as={ReactRouterLink} to="/acls/">{aclCount}</Link>]
             ]} />
-        </DetailsBlock>
+        </DetailsBlock> */}
 
 
         <Details title="Licensing" content={[

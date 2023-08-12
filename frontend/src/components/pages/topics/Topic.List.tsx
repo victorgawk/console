@@ -28,9 +28,10 @@ import createAutoModal from '../../../utils/createAutoModal';
 import { CreateTopicModalContent, CreateTopicModalState, RetentionSizeUnit, RetentionTimeUnit } from './CreateTopicModal/CreateTopicModal';
 import Section from '../../misc/Section';
 import PageContent from '../../misc/PageContent';
-import { Button, Icon, Checkbox, Alert, AlertIcon } from '@redpanda-data/ui';
+import { Button, Icon, Checkbox, Alert, AlertIcon, SearchField } from '@redpanda-data/ui';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { isServerless } from '../../../config';
+import { ShortNum } from '../../misc/ShortNum';
 
 @observer
 class TopicList extends PageComponent {
@@ -144,15 +145,17 @@ class TopicList extends PageComponent {
                 </Section>
 
                 <Section>
-                    <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                        <Button
-                            variant="solid"
-                            colorScheme="brand"
-                            onClick={() => this.showCreateTopicModal()}
-                            style={{ minWidth: '160px', marginBottom: '12px' }}
-                        >
-                            Create Topic
-                        </Button>
+                    <div
+                        style={{
+                            marginBottom: '.5rem',
+                            padding: '0',
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '2em',
+                        }}
+                    >
+                        <this.SearchBar />
 
                         {!isServerless() &&
                             <Checkbox
@@ -162,6 +165,16 @@ class TopicList extends PageComponent {
                                 Show internal topics
                             </Checkbox>
                         }
+                        <CreateDisabledTooltip>
+                            <Button
+                                variant="solid"
+                                colorScheme="brand"
+                                onClick={() => this.showCreateTopicModal()}
+                                style={{ minWidth: '160px', marginBottom: '12px' }}
+                            >
+                                Create Topic
+                            </Button>
+                        </CreateDisabledTooltip>
                         <this.CreateTopicModal />
                     </div>
                     <KowlTable
@@ -208,6 +221,14 @@ class TopicList extends PageComponent {
                                 width: '140px',
                             },
                             {
+                                title: 'Messages',
+                                render: (t, r) => ShortNum({ value: r.messages }),
+                                sorter: (a, b) =>
+                                    a.messages -
+                                    b.messages,
+                                width: '140px',
+                            },
+                            {
                                 width: 1,
                                 title: ' ',
                                 key: 'action',
@@ -231,10 +252,8 @@ class TopicList extends PageComponent {
                             },
                         ]}
                         search={{
-                            searchColumnIndex: 0,
                             isRowMatch: (row, regex) => {
                                 if (regex.test(row.topicName)) return true;
-                                if (regex.test(row.cleanupPolicy)) return true;
                                 return false;
                             },
                         }}
@@ -258,6 +277,14 @@ class TopicList extends PageComponent {
             </PageContent>
         );
     }
+
+    SearchBar = observer(() => {
+        return <SearchField width="350px"
+            placeholderText="Enter search term/regex"
+            searchText={uiSettings.topicList.quickSearch}
+            setSearchText={x => uiSettings.topicList.quickSearch = x}
+        />
+    })
 }
 export default TopicList;
 
@@ -392,14 +419,30 @@ function DeleteDisabledTooltip(props: { topic: Topic; children: JSX.Element }): 
     const wrap = (button: JSX.Element, message: string) => (
         <Tooltip placement="top" trigger="hover" mouseLeaveDelay={0} getPopupContainer={findPopupContainer} overlay={message}>
             {React.cloneElement(button, {
-                disabled: true,
+                isDisabled: true,
                 className: (button.props.className ?? '') + ' disabled',
                 onClick: undefined,
             })}
         </Tooltip>
     );
 
+    if (!uiSettings.enableTopicOperations) return <>{wrap(deleteButton, 'Disabled.')}</>;
+
     return <>{hasDeletePrivilege(topic.allowedActions) ? deleteButton : wrap(deleteButton, 'You don\'t have \'deleteTopic\' permission for this topic.')}</>;
+}
+
+function CreateDisabledTooltip(props: { children: JSX.Element }): JSX.Element {
+    const createButton = props.children;
+    const wrap = (button: JSX.Element, message: string) => (
+        <Tooltip placement="top" trigger="hover" mouseLeaveDelay={0} getPopupContainer={findPopupContainer} overlay={message}>
+            {React.cloneElement(button, {
+                isDisabled: true,
+                className: (button.props.className ?? '') + ' disabled',
+                onClick: undefined,
+            })}
+        </Tooltip>
+    );
+    return <>{uiSettings.enableTopicOperations ? createButton : wrap(createButton, 'Disabled.')}</>;
 }
 
 function hasDeletePrivilege(allowedActions?: Array<TopicAction>) {

@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (s *Service) startMessageWorker(ctx context.Context, wg *sync.WaitGroup, isMessageOK isMessageOkFunc, jobs <-chan *kgo.Record, resultsCh chan<- *TopicMessage) {
+func (s *Service) startMessageWorker(ctx context.Context, wg *sync.WaitGroup, isMessageOK isMessageOkFunc, jobs <-chan *kgo.Record, resultsCh chan<- *TopicMessage, parseJavaToJson bool) {
 	defer wg.Done()
 	defer func() {
 		if r := recover(); r != nil {
@@ -50,7 +50,7 @@ func (s *Service) startMessageWorker(ctx context.Context, wg *sync.WaitGroup, is
 		}
 
 		// Run Interpreter filter and check if message passes the filter
-		deserializedRec := s.Deserializer.DeserializeRecord(record)
+		deserializedRec := s.Deserializer.DeserializeRecord(record, parseJavaToJson)
 
 		headersByKey := make(map[string]interface{}, len(deserializedRec.Headers))
 		headers := make([]MessageHeader, 0)

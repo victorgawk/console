@@ -37,6 +37,7 @@ type ListMessagesRequest struct {
 	PartitionID           int32  `json:"partitionId"`    // -1 for all partition ids
 	MaxResults            int    `json:"maxResults"`
 	FilterInterpreterCode string `json:"filterInterpreterCode"` // Base64 encoded code
+	ParseJavaToJson       bool   `json:"parseJavaToJson"`
 
 	// Enterprise may only be set in the Enterprise mode. The JSON deserialization is deferred
 	// to the enterprise backend.
@@ -167,6 +168,7 @@ func (api *API) handleGetMessages() http.HandlerFunc {
 			StartTimestamp:        req.StartTimestamp,
 			MessageCount:          req.MaxResults,
 			FilterInterpreterCode: interpreterCode,
+			ParseJavaToJson:       req.ParseJavaToJson,
 		}
 		api.Hooks.Authorization.PrintListMessagesAuditLog(r, &listReq)
 

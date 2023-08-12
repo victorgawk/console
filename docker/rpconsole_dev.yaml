@@ -1,0 +1,13 @@
+# comando para rodar o backend (dentro da pasta ./backend)
+# go run -v cmd\api\main.go --config.filepath=../docker/rpconsole_dev.yaml
+kafka:
+  brokers:
+    - 127.0.0.1:9092
+  startup:
+    maxRetries: 999999999
+server:
+  listenPort: 9090
+  allowedOrigins: ["http://localhost:3000"]
+logger:
+  level: debug
+serveFrontend: false

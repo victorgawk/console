@@ -281,38 +281,38 @@ export const APP_ROUTES: IRouteEntry[] = [
     MakeRoute<{}>('/topics', TopicList, 'Topics', CollectionIcon),
     MakeRoute<{ topicName: string }>('/topics/:topicName', TopicDetails, 'Topics'),
 
-    MakeRoute<{}>('/schema-registry', SchemaList, 'Schema Registry', CubeTransparentIcon),
-    MakeRoute<{ subjectName: string }>('/schema-registry/:subjectName', SchemaDetailsView, 'Schema Registry'),
+    // MakeRoute<{}>('/schema-registry', SchemaList, 'Schema Registry', CubeTransparentIcon),
+    // MakeRoute<{ subjectName: string }>('/schema-registry/:subjectName', SchemaDetailsView, 'Schema Registry'),
 
     MakeRoute<{}>('/groups', GroupList, 'Consumer Groups', FilterIcon, undefined,
         routeVisibility(true, [Feature.ConsumerGroups])
     ),
     MakeRoute<{ groupId: string }>('/groups/:groupId/', GroupDetails, 'Consumer Groups'),
 
-    MakeRoute<{}>('/acls', AclList, 'Security', ShieldCheckIcon, true,
-        routeVisibility(true, [], ['canListAcls'])
-    ),
+    // MakeRoute<{}>('/acls', AclList, 'Security', ShieldCheckIcon, true,
+    //     routeVisibility(true, [], ['canListAcls'])
+    // ),
 
-    MakeRoute<{}>('/quotas', QuotasList, 'Quotas', ScaleIcon, true,
-        routeVisibility(true, [Feature.GetQuotas], ['canListQuotas'])
-    ),
+    // MakeRoute<{}>('/quotas', QuotasList, 'Quotas', ScaleIcon, true,
+    //     routeVisibility(true, [Feature.GetQuotas], ['canListQuotas'])
+    // ),
 
-    MakeRoute<{}>('/connect-clusters', KafkaConnectOverview, 'Connectors', LinkIcon, true),
-    MakeRoute<{ clusterName: string }>('/connect-clusters/:clusterName', KafkaClusterDetails, 'Connect Cluster'),
-    MakeRoute<{ clusterName: string}>('/connect-clusters/:clusterName/create-connector', CreateConnector, 'Create Connector', undefined, undefined, routeVisibility(false)),
-    MakeRoute<{ clusterName: string, connector: string }>('/connect-clusters/:clusterName/:connector', KafkaConnectorDetails, 'Connector Details'),
+    // MakeRoute<{}>('/connect-clusters', KafkaConnectOverview, 'Connectors', LinkIcon, true),
+    // MakeRoute<{ clusterName: string }>('/connect-clusters/:clusterName', KafkaClusterDetails, 'Connect Cluster'),
+    // MakeRoute<{ clusterName: string}>('/connect-clusters/:clusterName/create-connector', CreateConnector, 'Create Connector', undefined, undefined, routeVisibility(false)),
+    // MakeRoute<{ clusterName: string, connector: string }>('/connect-clusters/:clusterName/:connector', KafkaConnectorDetails, 'Connector Details'),
 
-    MakeRoute<{}>('/reassign-partitions', ReassignPartitions, 'Reassign Partitions', BeakerIcon, false,
-        routeVisibility(true,
-            [Feature.GetReassignments, Feature.PatchReassignments],
-            ['canPatchConfigs', 'canReassignPartitions'],
-            ['REASSIGN_PARTITIONS']
-        )
-    ),
+    // MakeRoute<{}>('/reassign-partitions', ReassignPartitions, 'Reassign Partitions', BeakerIcon, false,
+    //     routeVisibility(true,
+    //         [Feature.GetReassignments, Feature.PatchReassignments],
+    //         ['canPatchConfigs', 'canReassignPartitions'],
+    //         ['REASSIGN_PARTITIONS']
+    //     )
+    // ),
 
-    MakeRoute<{}>('/admin', AdminPage, 'Admin', CogIcon, false,
-        routeVisibility(() => api.userData?.canViewConsoleUsers ?? false)
-    ),
+    // MakeRoute<{}>('/admin', AdminPage, 'Admin', CogIcon, false,
+    //     routeVisibility(() => api.userData?.canViewConsoleUsers ?? false)
+    // ),
 
 
 ].filterNull();
