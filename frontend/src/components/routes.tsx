@@ -9,48 +9,27 @@
  * by the Apache License, Version 2.0
  */
 
-import React from 'react';
-import { Switch } from 'react-router-dom';
-import { Section } from './misc/common';
-import { Route, Redirect } from 'react-router';
-import { PageComponentType, PageProps } from './pages/Page';
-import TopicList from './pages/topics/Topic.List';
-import TopicDetails from './pages/topics/Topic.Details';
-import GroupList from './pages/consumers/Group.List';
-import GroupDetails from './pages/consumers/Group.Details';
-import { uiState } from '../state/uiState';
-import AdminPage from './pages/admin/AdminPage';
-import { api } from '../state/backendApi';
-import SchemaList from './pages/schemas/Schema.List';
-import SchemaDetailsView from './pages/schemas/Schema.Details';
-import AclList, { AclListTab } from './pages/acls/Acl.List';
-import { HomeIcon, CogIcon, CollectionIcon, CubeTransparentIcon, FilterIcon, ShieldCheckIcon, LinkIcon, ScaleIcon, BeakerIcon } from '@heroicons/react/outline';
-import ReassignPartitions from './pages/reassign-partitions/ReassignPartitions';
-import { Feature, FeatureEntry, isSupported, shouldHideIfNotSupported } from '../state/supportedFeatures';
-import { UserPermissions } from '../state/restInterfaces';
-import KafkaConnectOverview from './pages/connect/Overview';
-import KafkaConnectorDetails from './pages/connect/Connector.Details';
-import KafkaClusterDetails from './pages/connect/Cluster.Details';
-import CreateConnector from './pages/connect/CreateConnector';
-import QuotasList from './pages/quotas/Quotas.List';
-import { AppFeature, AppFeatures } from '../utils/env';
-import { AnimatePresence } from '../utils/animationProps';
+import { CogIcon, CollectionIcon, FilterIcon, HomeIcon } from '@heroicons/react/outline';
 import { NavLinkProps } from '@redpanda-data/ui/dist/components/Nav/NavLink';
-import Overview from './pages/overview/Overview';
+import React from 'react';
+import { Redirect, Route } from 'react-router';
+import { Switch } from 'react-router-dom';
+import { api } from '../state/backendApi';
+import { UserPermissions } from '../state/restInterfaces';
+import { Feature, FeatureEntry, isSupported, shouldHideIfNotSupported } from '../state/supportedFeatures';
+import { uiState } from '../state/uiState';
+import { AnimatePresence } from '../utils/animationProps';
+import { AppFeature, AppFeatures } from '../utils/env';
+import { Section } from './misc/common';
+import AdminPage from './pages/admin/AdminPage';
+import GroupDetails from './pages/consumers/Group.Details';
+import GroupList from './pages/consumers/Group.List';
 import { BrokerDetails } from './pages/overview/Broker.Details';
-import EditSchemaCompatibilityPage from './pages/schemas/EditCompatibility';
-import { SchemaCreatePage, SchemaAddVersionPage } from './pages/schemas/Schema.Create';
+import Overview from './pages/overview/Overview';
+import { PageComponentType, PageProps } from './pages/Page';
+import TopicDetails from './pages/topics/Topic.Details';
+import TopicList from './pages/topics/Topic.List';
 import { TopicProducePage } from './pages/topics/Topic.Produce';
-import UserCreatePage from './pages/acls/UserCreate';
-import UserDetailsPage from './pages/acls/UserDetails';
-import UserEditPage from './pages/acls/UserEdit';
-import RoleCreatePage from './pages/acls/RoleCreate';
-import RoleDetailsPage from './pages/acls/RoleDetails';
-import RoleEditPage from './pages/acls/RoleEditPage';
-import { MdOutlineSmartToy } from 'react-icons/md';
-import TransformsList from './pages/transforms/Transforms.List';
-import { TransformsSetup } from './pages/transforms/Transforms.Setup';
-import TransformDetails from './pages/transforms/Transform.Details';
 
 //
 //	Route Types
@@ -245,55 +224,55 @@ export const APP_ROUTES: IRouteEntry[] = [
     MakeRoute<{ topicName: string }>('/topics/:topicName', TopicDetails, 'Topics'),
     MakeRoute<{ topicName: string }>('/topics/:topicName/produce-record', TopicProducePage, 'Produce Record'),
 
-    MakeRoute<{}>('/schema-registry', SchemaList, 'Schema Registry', CubeTransparentIcon),
-    MakeRoute<{}>('/schema-registry/create', SchemaCreatePage, 'Create schema'),
-    MakeRoute<{ subjectName: string }>('/schema-registry/subjects/:subjectName/add-version', SchemaAddVersionPage, 'Add version'),
-    MakeRoute<{ subjectName: string }>('/schema-registry/subjects/:subjectName', SchemaDetailsView, 'Schema Registry'),
-    MakeRoute<{ subjectName: string }>('/schema-registry/edit-compatibility', EditSchemaCompatibilityPage, 'Edit Schema Compatibility'),
-    MakeRoute<{ subjectName: string }>('/schema-registry/subjects/:subjectName/edit-compatibility', EditSchemaCompatibilityPage, 'Edit Schema Compatibility'),
+    // MakeRoute<{}>('/schema-registry', SchemaList, 'Schema Registry', CubeTransparentIcon),
+    // MakeRoute<{}>('/schema-registry/create', SchemaCreatePage, 'Create schema'),
+    // MakeRoute<{ subjectName: string }>('/schema-registry/subjects/:subjectName/add-version', SchemaAddVersionPage, 'Add version'),
+    // MakeRoute<{ subjectName: string }>('/schema-registry/subjects/:subjectName', SchemaDetailsView, 'Schema Registry'),
+    // MakeRoute<{ subjectName: string }>('/schema-registry/edit-compatibility', EditSchemaCompatibilityPage, 'Edit Schema Compatibility'),
+    // MakeRoute<{ subjectName: string }>('/schema-registry/subjects/:subjectName/edit-compatibility', EditSchemaCompatibilityPage, 'Edit Schema Compatibility'),
 
     MakeRoute<{}>('/groups', GroupList, 'Consumer Groups', FilterIcon, undefined,
         routeVisibility(true, [Feature.ConsumerGroups])
     ),
     MakeRoute<{ groupId: string }>('/groups/:groupId/', GroupDetails, 'Consumer Groups'),
 
-    MakeRoute<{}>('/security', AclList, 'Security', ShieldCheckIcon, true,
-        routeVisibility(true, [], ['canListAcls'])
-    ),
-    MakeRoute<{ tab: AclListTab }>('/security/:tab', AclList, 'Security'),
+    // MakeRoute<{}>('/security', AclList, 'Security', ShieldCheckIcon, true,
+    //     routeVisibility(true, [], ['canListAcls'])
+    // ),
+    // MakeRoute<{ tab: AclListTab }>('/security/:tab', AclList, 'Security'),
 
-    MakeRoute<{}>('/security/users/create', UserCreatePage, 'Security'),
-    MakeRoute<{ userName: string }>('/security/users/:userName/details', UserDetailsPage, 'Security'),
-    MakeRoute<{ userName: string }>('/security/users/:userName/edit', UserEditPage, 'Security'),
+    // MakeRoute<{}>('/security/users/create', UserCreatePage, 'Security'),
+    // MakeRoute<{ userName: string }>('/security/users/:userName/details', UserDetailsPage, 'Security'),
+    // MakeRoute<{ userName: string }>('/security/users/:userName/edit', UserEditPage, 'Security'),
 
-    MakeRoute<{}>('/security/roles/create', RoleCreatePage, 'Security'),
-    MakeRoute<{ roleName: string }>('/security/roles/:roleName/details', RoleDetailsPage, 'Security'),
-    MakeRoute<{ roleName: string }>('/security/roles/:roleName/edit', RoleEditPage, 'Security'),
+    // MakeRoute<{}>('/security/roles/create', RoleCreatePage, 'Security'),
+    // MakeRoute<{ roleName: string }>('/security/roles/:roleName/details', RoleDetailsPage, 'Security'),
+    // MakeRoute<{ roleName: string }>('/security/roles/:roleName/edit', RoleEditPage, 'Security'),
 
 
-    MakeRoute<{}>('/quotas', QuotasList, 'Quotas', ScaleIcon, true,
-        routeVisibility(true, [Feature.GetQuotas], ['canListQuotas'])
-    ),
+    // MakeRoute<{}>('/quotas', QuotasList, 'Quotas', ScaleIcon, true,
+    //     routeVisibility(true, [Feature.GetQuotas], ['canListQuotas'])
+    // ),
 
-    MakeRoute<{}>('/connect-clusters', KafkaConnectOverview, 'Redpanda Connect', LinkIcon, true),
-    MakeRoute<{ clusterName: string }>('/connect-clusters/:clusterName', KafkaClusterDetails, 'Connect Cluster'),
-    MakeRoute<{ clusterName: string}>('/connect-clusters/:clusterName/create-connector', CreateConnector, 'Create Connector', undefined, undefined, routeVisibility(false)),
-    MakeRoute<{ clusterName: string, connector: string }>('/connect-clusters/:clusterName/:connector', KafkaConnectorDetails, 'Connector Details'),
+    // MakeRoute<{}>('/connect-clusters', KafkaConnectOverview, 'Redpanda Connect', LinkIcon, true),
+    // MakeRoute<{ clusterName: string }>('/connect-clusters/:clusterName', KafkaClusterDetails, 'Connect Cluster'),
+    // MakeRoute<{ clusterName: string}>('/connect-clusters/:clusterName/create-connector', CreateConnector, 'Create Connector', undefined, undefined, routeVisibility(false)),
+    // MakeRoute<{ clusterName: string, connector: string }>('/connect-clusters/:clusterName/:connector', KafkaConnectorDetails, 'Connector Details'),
 
-    MakeRoute<{}>('/transforms-setup', TransformsSetup, 'Transforms', undefined, true),
-    MakeRoute<{}>('/transforms', TransformsList, 'Transforms', MdOutlineSmartToy, true),
-    MakeRoute<{ transformName: string }>('/transforms/:transformName', TransformDetails, 'Transforms'),
+    // MakeRoute<{}>('/transforms-setup', TransformsSetup, 'Transforms', undefined, true),
+    // MakeRoute<{}>('/transforms', TransformsList, 'Transforms', MdOutlineSmartToy, true),
+    // MakeRoute<{ transformName: string }>('/transforms/:transformName', TransformDetails, 'Transforms'),
 
     // MakeRoute<{}>('/rp-connect', RpConnectPipelinesList, 'Redpanda Connect Pipelines', LinkIcon, true),
     // MakeRoute<{ connectorName: string }>('/rp-connect/:connectorName', RpConnectPipelinesDetails, 'Redpanda Connect Pipelines'),
 
-    MakeRoute<{}>('/reassign-partitions', ReassignPartitions, 'Reassign Partitions', BeakerIcon, false,
-        routeVisibility(true,
-            [Feature.GetReassignments, Feature.PatchReassignments],
-            ['canPatchConfigs', 'canReassignPartitions'],
-            ['REASSIGN_PARTITIONS']
-        )
-    ),
+    // MakeRoute<{}>('/reassign-partitions', ReassignPartitions, 'Reassign Partitions', BeakerIcon, false,
+    //     routeVisibility(true,
+    //         [Feature.GetReassignments, Feature.PatchReassignments],
+    //         ['canPatchConfigs', 'canReassignPartitions'],
+    //         ['REASSIGN_PARTITIONS']
+    //     )
+    // ),
 
     MakeRoute<{}>('/admin', AdminPage, 'Admin', CogIcon, false,
         routeVisibility(() => api.userData?.canViewConsoleUsers ?? false)

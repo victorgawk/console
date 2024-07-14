@@ -9,24 +9,23 @@
  * by the Apache License, Version 2.0
  */
 
+import { CrownOutlined } from '@ant-design/icons';
+import { CheckIcon } from '@primer/octicons-react';
+import { Button, DataTable, Flex, Grid, GridItem, Heading, Icon, Skeleton, Tooltip } from '@redpanda-data/ui';
+import { Row } from '@tanstack/react-table';
+import { computed, makeObservable } from 'mobx';
 import { observer } from 'mobx-react';
-import { PageComponent, PageInitHelper } from '../Page';
+import React, { FC } from 'react';
+import { appGlobal } from '../../../state/appGlobal';
 import { api } from '../../../state/backendApi';
 import { BrokerWithConfigAndStorage, OverviewStatus, RedpandaLicense } from '../../../state/restInterfaces';
-import { computed, makeObservable } from 'mobx';
-import { prettyBytes, prettyBytesOrNA, titleCase } from '../../../utils/utils';
-import { appGlobal } from '../../../state/appGlobal';
-import { CrownOutlined } from '@ant-design/icons';
 import { DefaultSkeleton } from '../../../utils/tsxUtils';
-import Section from '../../misc/Section';
+import { prettyBytes, prettyBytesOrNA, titleCase } from '../../../utils/utils';
 import PageContent from '../../misc/PageContent';
-import './Overview.scss';
-import { Button, DataTable, Flex, Heading, Icon, Link, Skeleton, Tooltip, Grid, GridItem } from '@redpanda-data/ui';
-import { CheckIcon } from '@primer/octicons-react';
-import { Link as ReactRouterLink } from 'react-router-dom';
-import React, { FC } from 'react';
+import Section from '../../misc/Section';
 import { Statistic } from '../../misc/Statistic';
-import { Row } from '@tanstack/react-table';
+import { PageComponent, PageInitHelper } from '../Page';
+import './Overview.scss';
 
 @observer
 class Overview extends PageComponent {
@@ -51,7 +50,7 @@ class Overview extends PageComponent {
         api.refreshCluster(force);
         api.refreshClusterOverview(force);
         api.refreshBrokers(force);
-        api.refreshNews(force);
+        // api.refreshNews(force);
     }
 
     render() {
@@ -303,11 +302,11 @@ function ClusterDetails() {
     const totalReplicatedStorageBytes = totalStorageBytes - totalPrimaryStorageBytes;
 
 
-    const serviceAccounts = overview.redpanda.userCount
-        ?? 'Admin API not configured';
+    // const serviceAccounts = overview.redpanda.userCount
+    //     ?? 'Admin API not configured';
 
-    const aclCount = overview.kafka.authorizer?.aclCount
-        ?? 'Authorizer not configured';
+    // const aclCount = overview.kafka.authorizer?.aclCount
+    //     ?? 'Authorizer not configured';
 
     const consoleLicense = prettyLicense(overview.console.license);
     const redpandaLicense = prettyLicense(overview.redpanda.license);
@@ -377,7 +376,7 @@ function ClusterDetails() {
         </DetailsBlock>
 
 
-        <DetailsBlock title="Security">
+        {/* <DetailsBlock title="Security">
             <Details title="Service Accounts" content={[
                 [<Link key={0} as={ReactRouterLink} to="/acls/">{serviceAccounts}</Link>]
             ]}/>
@@ -385,7 +384,7 @@ function ClusterDetails() {
             <Details title="ACLs" content={[
                 [<Link key={0} as={ReactRouterLink} to="/acls/">{aclCount}</Link>]
             ]}/>
-        </DetailsBlock>
+        </DetailsBlock> */}
 
         <Details title="Licensing" content={[
             consoleLicense && ['Console ' + consoleLicense.name, consoleLicense.expires],

@@ -9,21 +9,25 @@
  * by the Apache License, Version 2.0
  */
 
-import React, { Component, FC, useState } from 'react';
+import { ToolsIcon } from '@primer/octicons-react';
+import { Alert, AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertIcon, Button, Checkbox, Flex, IconButton, Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, NumberInput, Tabs, Text, Tooltip, useToast } from '@redpanda-data/ui';
+import { transaction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react';
+import { cloneElement, Component, FC, useRef, useState } from 'react';
+import { appGlobal } from '../../state/appGlobal';
+import { api } from '../../state/backendApi';
+import { Topic } from '../../state/restInterfaces';
 import { clearSettings, uiSettings } from '../../state/ui';
 import { Label, navigatorClipboardErrorHandler } from '../../utils/tsxUtils';
-import { transaction } from 'mobx';
-import { ToolsIcon } from '@primer/octicons-react';
-import { Button, Checkbox, Flex, IconButton, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useToast, Text, Tabs, Input, NumberInput } from '@redpanda-data/ui';
 
-type SettingsTabKeys = 'statisticsBar' | 'jsonViewer' | 'importExport' | 'autoRefresh'
+type SettingsTabKeys = 'statisticsBar' | 'jsonViewer' | 'importExport' | 'autoRefresh' | 'custom'
 
 const settingsTabs: Record<SettingsTabKeys, { name: string, component: FC }> = {
     statisticsBar: {name: 'Statistics Bar', component: () => <StatsBarTab/>},
     jsonViewer: {name: 'Json Viewer', component: () => <JsonViewerTab/>},
     importExport: {name: 'Import/Export', component: () => <ImportExportTab/>},
     autoRefresh: {name: 'Auto Refresh', component: () => <AutoRefreshTab/>},
+    custom: { name: 'Custom', component: () => <CustomTab /> },
     // pagination position
     // messageSearch: { name: "Message Search", component: () => <MessageSearchTab /> },
 }
@@ -225,4 +229,297 @@ class AutoRefreshTab extends Component {
             </div>
         </div>;
     }
+}
+
+@observer
+class CustomTab extends Component {
+    render() {
+        return <div>
+            <div style={{ display: 'inline-grid', gridAutoFlow: 'row', gridRowGap: '24px', gridColumnGap: '32px', marginRight: 'auto' }}>
+                <Label text="Topic Operations">
+                    <Checkbox children="Enabled" checked={uiSettings.enableTopicOperations} onChange={e => {
+                        uiSettings.enableTopicOperations = e.target.checked;
+                        appGlobal.onRefresh();
+                    }} />
+                </Label>
+
+                <Label text="Delete All Records">
+                    <DeleteDisabledTooltip>
+                        <Button
+                            variant="solid"
+                            colorScheme="brand"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                uiSettings._deleteAllRecordsModalVisible = true;
+                            }}
+                        >
+                            Delete All Records
+                        </Button>
+                    </DeleteDisabledTooltip>
+                </Label>
+                <ConfirmDeleteAllRecordsModal
+                    deleteAllRecordsVisible={uiSettings._deleteAllRecordsModalVisible}
+                    onCancel={() => (uiSettings._deleteAllRecordsModalVisible = false)}
+                    onFinish={() => {
+                        uiSettings._deleteAllRecordsModalVisible = false;
+                        appGlobal.onRefresh();
+                    }}
+                />
+
+                <Label text="Delete All Topics">
+                    <DeleteDisabledTooltip>
+                        <Button
+                            variant="solid"
+                            colorScheme="brand"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                uiSettings._deleteAllTopicsModalVisible = true;
+                            }}
+                        >
+                            Delete All Topics
+                        </Button>
+                    </DeleteDisabledTooltip>
+                </Label>
+                <ConfirmDeleteAllTopicsModal
+                    deleteAllTopicsVisible={uiSettings._deleteAllTopicsModalVisible}
+                    onCancel={() => (uiSettings._deleteAllTopicsModalVisible = false)}
+                    onFinish={() => {
+                        uiSettings._deleteAllTopicsModalVisible = false;
+                        appGlobal.onRefresh();
+                    }}
+                />
+            </div>
+        </div>;
+    }
+}
+
+function DeleteDisabledTooltip(props: { children: JSX.Element }): JSX.Element {
+    const deleteButton = props.children;
+    const wrap = (button: JSX.Element, message: string) => (
+        <Tooltip placement="top" label={message}>
+            {cloneElement(button, {
+                isDisabled: true,
+                className: (button.props.className ?? '') + ' disabled',
+                onClick: undefined,
+            })}
+        </Tooltip>
+    );
+    return <>{uiSettings.enableTopicOperations ? deleteButton : wrap(deleteButton, 'Disabled.')}</>;
+}
+
+function ConfirmDeleteAllRecordsModal({ deleteAllRecordsVisible, onFinish, onCancel }: { deleteAllRecordsVisible: boolean; onFinish: () => void; onCancel: () => void }) {
+    const [deletionPending, setDeletionPending] = useState(false);
+    const [error, setError] = useState<string | Error | null>(null);
+    const toast = useToast()
+    const cancelRef = useRef<HTMLButtonElement | null>(null)
+
+
+    const cleanup = () => {
+        setDeletionPending(false);
+        setError(null);
+    };
+
+    const finish = () => {
+        onFinish();
+        cleanup();
+
+        toast({
+            title: 'Records Deleted',
+            description: <Text as="span">Records from all topics deleted successfully</Text>,
+            status: 'success',
+        })
+    };
+
+    const cancel = () => {
+        onCancel();
+        cleanup();
+    };
+
+    return (
+        <AlertDialog
+            isOpen={deleteAllRecordsVisible}
+            leastDestructiveRef={cancelRef}
+            onClose={cancel}
+        >
+            <AlertDialogOverlay>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        Delete Topic
+                    </AlertDialogHeader>
+
+                    <AlertDialogBody>
+                        {error && <Alert status="error" mb={2}>
+                            <AlertIcon/>
+                            {`An error occurred: ${typeof error === 'string' ? error : error.message}`}
+                        </Alert>}
+                        <Text>
+                            Are you sure you want to delete all records from all topics?<br/>
+                            This action cannot be undone.
+                        </Text>
+                    </AlertDialogBody>
+
+                    <AlertDialogFooter>
+                        <Button ref={cancelRef} onClick={cancel} variant="ghost">
+                            Cancel
+                        </Button>
+                        <Button
+                            data-testid="delete-topic-confirm-button"
+                            isLoading={deletionPending} colorScheme="brand" onClick={() => {
+
+                            setDeletionPending(true);
+
+                            api.refreshTopics();
+                            api.refreshPartitions()
+                            .then(() => {
+                                if (api.topics == null) {
+                                    setDeletionPending(false);
+                                    return Promise.resolve().then(() => {
+                                        return [];
+                                    });
+                                }
+                                const promises: Array<Promise<{topic: Topic; errors: Array<string>}>> = []
+                                for (const topic of api.topics) {
+                                    const promise = api.deleteTopicRecordsFromAllPartitionsHighWatermark(topic.topicName).then((responseData) => {
+                                        const errors: Array<string> = [];
+                                        if (responseData == null) {
+                                            errors.push(`Topic ${topic.topicName} doesn't have partitions.`);
+                                        } else {
+                                            const errorPartitions = responseData.partitions.filter((partition) => !!partition.error);
+                                            if (errorPartitions.length > 0) {
+                                                errors.concat(errorPartitions.map(({ partitionId, error }) => `Topic ${topic.topicName} partition ${partitionId}: ${error}`));
+                                            }
+                                        }
+                                        return { topic, errors };
+                                    });
+                                    promises.push(promise);
+                                }
+            
+                                return Promise.all(promises)
+                                .then((responses) => {
+                                    const errors: Array<string> = [];
+                                    for (const response of responses) {
+                                        errors.concat(response.errors);
+                                    }
+                                    return errors;
+                                })
+                            })
+                                .then(finish)
+                                .catch(setError)
+                                .finally(() => {
+                                    setDeletionPending(false)
+                                });
+                        }} ml={3}>
+                            Delete
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialogOverlay>
+        </AlertDialog>
+    )
+}
+
+function ConfirmDeleteAllTopicsModal({ deleteAllTopicsVisible, onFinish, onCancel }: { deleteAllTopicsVisible: boolean; onFinish: () => void; onCancel: () => void }) {
+    const [deletionPending, setDeletionPending] = useState(false);
+    const [error, setError] = useState<string | Error | null>(null);
+    const toast = useToast()
+    const cancelRef = useRef<HTMLButtonElement | null>(null)
+
+
+    const cleanup = () => {
+        setDeletionPending(false);
+        setError(null);
+    };
+
+    const finish = () => {
+        onFinish();
+        cleanup();
+
+        toast({
+            title: 'Topics Deleted',
+            description: <Text as="span">Topics deleted successfully</Text>,
+            status: 'success',
+        })
+    };
+
+    const cancel = () => {
+        onCancel();
+        cleanup();
+    };
+
+    return (
+        <AlertDialog
+            isOpen={deleteAllTopicsVisible}
+            leastDestructiveRef={cancelRef}
+            onClose={cancel}
+        >
+            <AlertDialogOverlay>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        Delete Topic
+                    </AlertDialogHeader>
+
+                    <AlertDialogBody>
+                        {error && <Alert status="error" mb={2}>
+                            <AlertIcon/>
+                            {`An error occurred: ${typeof error === 'string' ? error : error.message}`}
+                        </Alert>}
+                        <Text>
+                            Are you sure you want to delete all topics?<br/>
+                            This action cannot be undone.
+                        </Text>
+                    </AlertDialogBody>
+
+                    <AlertDialogFooter>
+                        <Button ref={cancelRef} onClick={cancel} variant="ghost">
+                            Cancel
+                        </Button>
+                        <Button
+                            data-testid="delete-topic-confirm-button"
+                            isLoading={deletionPending} colorScheme="brand" onClick={() => {
+
+                            setDeletionPending(true);
+
+                            api.refreshTopics();
+                            api.refreshPartitions()
+                            .then(() => {
+                                if (api.topics == null) {
+                                    setDeletionPending(false);
+                                    return Promise.resolve().then(() => {
+                                        return [];
+                                    });
+                                }
+                                const promises: Array<Promise<{topic: Topic; errors: Array<string>}>> = []
+                                for (const topic of api.topics) {
+                                    const promise = api.deleteTopic(topic.topicName).then((responseData) => {
+                                        const errors: Array<string> = [];
+                                        if (responseData == null) {
+                                            errors.push(`Error when deleting topic ${topic.topicName}.`);
+                                        }
+                                        return { topic, errors };
+                                    });
+                                    promises.push(promise);
+                                }
+            
+                                return Promise.all(promises)
+                                .then((responses) => {
+                                    const errors: Array<string> = [];
+                                    for (const response of responses) {
+                                        errors.concat(response.errors);
+                                    }
+                                    return errors;
+                                })
+                            })
+                                .then(finish)
+                                .catch(setError)
+                                .finally(() => {
+                                    setDeletionPending(false)
+                                });
+                        }} ml={3}>
+                            Delete
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialogOverlay>
+        </AlertDialog>
+    )
 }

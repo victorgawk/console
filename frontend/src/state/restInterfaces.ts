@@ -61,6 +61,7 @@ export interface Topic {
     cleanupPolicy: string;
     documentation: 'UNKNOWN' | 'NOT_CONFIGURED' | 'NOT_EXISTENT' | 'AVAILABLE';
     logDirSummary: TopicLogDirSummary;
+    messages: number;
     allowedActions: TopicAction[] | undefined;
 }
 

@@ -167,6 +167,10 @@ const defaultUiSettings = {
         collapsed: 2,
     },
 
+    enableTopicOperations: false,
+    _deleteAllRecordsModalVisible: false,
+    _deleteAllTopicsModalVisible: false,
+
     // todo: refactor into: brokers.list, brokers.detail, topics.messages, topics.config, ...
     brokerList: {
         hideEmptyColumns: false,

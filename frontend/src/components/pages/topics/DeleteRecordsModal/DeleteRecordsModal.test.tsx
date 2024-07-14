@@ -21,6 +21,7 @@ const testTopic: Topic = {
     isInternal: false,
     documentation: 'UNKNOWN',
     topicName: 'test_topic',
+    messages: 3,
     logDirSummary: {
         totalSizeBytes: 1024,
         hint: null,

@@ -9,27 +9,7 @@
  * by the Apache License, Version 2.0
  */
 
-import React, { FC, useRef, useState } from 'react';
-import { autorun, computed, IReactionDisposer, makeObservable, observable } from 'mobx';
-import { observer } from 'mobx-react';
-import { appGlobal } from '../../../state/appGlobal';
-import { api } from '../../../state/backendApi';
-import { Topic, TopicAction, TopicActions, TopicConfigEntry } from '../../../state/restInterfaces';
-import { uiSettings } from '../../../state/ui';
-import { editQuery } from '../../../utils/queryHelper';
-import { Code, DefaultSkeleton, QuickTable } from '../../../utils/tsxUtils';
-import { renderLogDirSummary } from '../../misc/common';
-import { PageComponent, PageInitHelper } from '../Page';
 import { CheckIcon, CircleSlashIcon, EyeClosedIcon } from '@primer/octicons-react';
-import createAutoModal from '../../../utils/createAutoModal';
-import {
-    CreateTopicModalContent,
-    CreateTopicModalState,
-    RetentionSizeUnit,
-    RetentionTimeUnit
-} from './CreateTopicModal/CreateTopicModal';
-import Section from '../../misc/Section';
-import PageContent from '../../misc/PageContent';
 import {
     Alert,
     AlertDialog,
@@ -52,12 +32,33 @@ import {
     Tooltip,
     useToast
 } from '@redpanda-data/ui';
+import { autorun, computed, IReactionDisposer, makeObservable, observable } from 'mobx';
+import { observer } from 'mobx-react';
+import React, { FC, useRef, useState } from 'react';
 import { HiOutlineTrash } from 'react-icons/hi';
-import { Statistic } from '../../misc/Statistic';
 import { Link } from 'react-router-dom';
-import SearchBar from '../../misc/SearchBar';
 import usePaginationParams from '../../../hooks/usePaginationParams';
+import { appGlobal } from '../../../state/appGlobal';
+import { api } from '../../../state/backendApi';
+import { Topic, TopicAction, TopicActions, TopicConfigEntry } from '../../../state/restInterfaces';
+import { uiSettings } from '../../../state/ui';
+import createAutoModal from '../../../utils/createAutoModal';
 import { onPaginationChange } from '../../../utils/pagination';
+import { editQuery } from '../../../utils/queryHelper';
+import { Code, DefaultSkeleton, QuickTable } from '../../../utils/tsxUtils';
+import { renderLogDirSummary } from '../../misc/common';
+import PageContent from '../../misc/PageContent';
+import SearchBar from '../../misc/SearchBar';
+import Section from '../../misc/Section';
+import { ShortNum } from '../../misc/ShortNum';
+import { Statistic } from '../../misc/Statistic';
+import { PageComponent, PageInitHelper } from '../Page';
+import {
+    CreateTopicModalContent,
+    CreateTopicModalState,
+    RetentionSizeUnit,
+    RetentionTimeUnit
+} from './CreateTopicModal/CreateTopicModal';
 
 @observer
 class TopicList extends PageComponent {
@@ -157,15 +158,18 @@ class TopicList extends PageComponent {
                 </Box>
                 <Section>
                     <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                        <Button
-                            variant="solid"
-                            colorScheme="brand"
-                            onClick={() => this.showCreateTopicModal()}
-                            style={{ minWidth: '160px', marginBottom: '12px' }}
-                            data-testid="create-topic-button"
-                        >
-                            Create topic
-                        </Button>
+                        
+                        <CreateDisabledTooltip>
+                            <Button
+                                variant="solid"
+                                colorScheme="brand"
+                                onClick={() => this.showCreateTopicModal()}
+                                style={{ minWidth: '160px', marginBottom: '12px' }}
+                                data-testid="create-topic-button"
+                            >
+                                Create topic
+                            </Button>
+                        </CreateDisabledTooltip>
 
                         <Checkbox
                             data-testid="show-internal-topics-checkbox"
@@ -238,6 +242,11 @@ const TopicsTable: FC<{ topics: Topic[], onDelete: (record: Topic) => void }> = 
                     header: 'Size',
                     accessorKey: 'logDirSummary.totalSizeBytes',
                     cell: ({row: {original: topic}}) => renderLogDirSummary(topic.logDirSummary),
+                },
+                {
+                    header: 'Messages',
+                    accessorKey: 'messages',
+                    cell: ({row: {original: topic}}) => ShortNum({ value: topic.messages }),
                 },
                 {
                     id: 'action',
@@ -412,14 +421,32 @@ function DeleteDisabledTooltip(props: { topic: Topic; children: JSX.Element }): 
     const wrap = (button: JSX.Element, message: string) => (
         <Tooltip placement="left" label={message} hasArrow>
             {React.cloneElement(button, {
-                disabled: true,
+                isDisabled: true,
                 className: (button.props.className ?? '') + ' disabled',
                 onClick: undefined
             })}
         </Tooltip>
     );
 
+    if (!uiSettings.enableTopicOperations) return <>{wrap(deleteButton, 'Disabled.')}</>;
+
     return <>{hasDeletePrivilege(topic.allowedActions) ? deleteButton : wrap(deleteButton, 'You don\'t have \'deleteTopic\' permission for this topic.')}</>;
+}
+
+function CreateDisabledTooltip(props: { children: JSX.Element }): JSX.Element {
+    const createButton = props.children;
+
+    const wrap = (button: JSX.Element, message: string) => (
+        <Tooltip placement="top" label={message} hasArrow>
+            {React.cloneElement(button, {
+                isDisabled: true,
+                className: (button.props.className ?? '') + ' disabled',
+                onClick: undefined
+            })}
+        </Tooltip>
+    );
+
+    return <>{uiSettings.enableTopicOperations ? createButton : wrap(createButton, 'Disabled.')}</>;
 }
 
 function hasDeletePrivilege(allowedActions?: Array<TopicAction>) {

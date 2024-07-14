@@ -1,6 +1,6 @@
 module github.com/redpanda-data/console/backend
 
-go 1.22.2
+go 1.22.4
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240508200655-46a4cf4ba109.2
@@ -50,6 +50,7 @@ require (
 	github.com/twmb/franz-go/pkg/sr v1.0.0
 	github.com/twmb/franz-go/plugin/kzap v1.1.2
 	github.com/twmb/go-cache v1.2.1
+	github.com/victorgawk/java2json-go v0.0.4
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/zencoder/go-smile v0.0.0-20220221105746-06ef4fe5fa0a
 	go.uber.org/mock v0.4.0

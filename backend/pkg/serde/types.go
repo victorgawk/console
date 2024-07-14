@@ -43,6 +43,8 @@ const (
 	PayloadEncodingSmile PayloadEncoding = "smile"
 	// PayloadEncodingUint is the enum of Uint types.
 	PayloadEncodingUint PayloadEncoding = "uint"
+	// PayloadEncodingUint is the enum of Base64 Java encoded types.
+	PayloadEncodingBase64Java PayloadEncoding = "base64Java"
 )
 
 // HeaderEncoding is an enum for different header encoding types.

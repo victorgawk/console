@@ -10,60 +10,9 @@
  */
 
 import { ClockCircleOutlined, DeleteOutlined, DownloadOutlined, SettingOutlined } from '@ant-design/icons';
+import { InfoIcon, WarningIcon } from '@chakra-ui/icons';
+import { CogIcon } from '@heroicons/react/solid';
 import { DownloadIcon, KebabHorizontalIcon, SkipIcon, SyncIcon, XCircleIcon } from '@primer/octicons-react';
-import { action, autorun, computed, IReactionDisposer, makeObservable, observable, transaction, untracked } from 'mobx';
-import { observer } from 'mobx-react';
-import React, { Component, FC, ReactNode, useState } from 'react';
-import { api, createMessageSearch, MessageSearch, MessageSearchRequest } from '../../../../state/backendApi';
-import { Payload, Topic, TopicAction, TopicMessage } from '../../../../state/restInterfaces';
-import { Feature, isSupported } from '../../../../state/supportedFeatures';
-import {
-    ColumnList,
-    DataColumnKey,
-    DEFAULT_SEARCH_PARAMS,
-    FilterEntry,
-    PartitionOffsetOrigin,
-    PreviewTagV2,
-    TimestampDisplayFormat,
-} from '../../../../state/ui';
-import { uiState } from '../../../../state/uiState';
-import '../../../../utils/arrayExtensions';
-import { IsDev } from '../../../../utils/env';
-import { FilterableDataSource } from '../../../../utils/filterableDataSource';
-import { sanitizeString, wrapFilterFragment } from '../../../../utils/filterHelper';
-import { toJson } from '../../../../utils/jsonUtils';
-import { editQuery } from '../../../../utils/queryHelper';
-import {
-    MdAdd,
-    MdExpandMore,
-    MdJavascript,
-    MdOutlineLayers,
-    MdOutlineRoundedCorner,
-    MdOutlineSearch
-} from 'react-icons/md';
-import {
-    Ellipsis,
-    Label,
-    navigatorClipboardErrorHandler,
-    numberToThousandsString,
-    OptionGroup,
-    StatusIndicator,
-    TimestampDisplay,
-    toSafeString
-} from '../../../../utils/tsxUtils';
-import {
-    base64FromUInt8Array,
-    cullText,
-    encodeBase64,
-    prettyBytes,
-    prettyMilliseconds,
-    titleCase
-} from '../../../../utils/utils';
-import { range } from '../../../misc/common';
-import { KowlJsonView } from '../../../misc/KowlJsonView';
-import DeleteRecordsModal from '../DeleteRecordsModal/DeleteRecordsModal';
-import { getPreviewTags, PreviewSettings } from './PreviewSettings';
-import styles from './styles.module.scss';
 import {
     Alert,
     AlertDescription,
@@ -94,8 +43,8 @@ import {
     ModalHeader,
     ModalOverlay,
     RadioGroup,
-    Select,
     Tabs as RpTabs,
+    Select,
     Tag,
     TagCloseButton,
     TagLabel,
@@ -106,19 +55,71 @@ import {
     useToast,
     VStack
 } from '@redpanda-data/ui';
-import { SingleSelect, SingleSelectProps } from '../../../misc/Select';
-import { MultiValue } from 'chakra-react-select';
-import { isServerless } from '../../../../config';
-import { Link as ReactRouterLink } from 'react-router-dom';
-import { appGlobal } from '../../../../state/appGlobal';
-import { InfoIcon, WarningIcon } from '@chakra-ui/icons';
 import { ColumnDef } from '@tanstack/react-table';
-import { CogIcon } from '@heroicons/react/solid';
-import { PayloadEncoding } from '../../../../protogen/redpanda/api/console/v1alpha1/common_pb';
+import { MultiValue } from 'chakra-react-select';
+import { action, autorun, computed, IReactionDisposer, makeObservable, observable, transaction, untracked } from 'mobx';
+import { observer } from 'mobx-react';
+import React, { Component, FC, ReactNode, useState } from 'react';
+import {
+    MdAdd,
+    MdExpandMore,
+    MdJavascript,
+    MdOutlineLayers,
+    MdOutlineRoundedCorner,
+    MdOutlineSearch
+} from 'react-icons/md';
+import { Link as ReactRouterLink } from 'react-router-dom';
+import { isServerless } from '../../../../config';
 import usePaginationParams from '../../../../hooks/usePaginationParams';
+import { PayloadEncoding } from '../../../../protogen/redpanda/api/console/v1alpha1/common_pb';
+import { appGlobal } from '../../../../state/appGlobal';
+import { api, createMessageSearch, MessageSearch, MessageSearchRequest } from '../../../../state/backendApi';
+import { Payload, Topic, TopicAction, TopicMessage } from '../../../../state/restInterfaces';
+import { Feature, isSupported } from '../../../../state/supportedFeatures';
+import {
+    ColumnList,
+    DataColumnKey,
+    DEFAULT_SEARCH_PARAMS,
+    FilterEntry,
+    PartitionOffsetOrigin,
+    PreviewTagV2,
+    TimestampDisplayFormat,
+    uiSettings,
+} from '../../../../state/ui';
+import { uiState } from '../../../../state/uiState';
+import '../../../../utils/arrayExtensions';
+import { IsDev } from '../../../../utils/env';
+import { FilterableDataSource } from '../../../../utils/filterableDataSource';
+import { sanitizeString, wrapFilterFragment } from '../../../../utils/filterHelper';
+import { toJson } from '../../../../utils/jsonUtils';
 import { onPaginationChange } from '../../../../utils/pagination';
+import { editQuery } from '../../../../utils/queryHelper';
+import {
+    Ellipsis,
+    Label,
+    navigatorClipboardErrorHandler,
+    numberToThousandsString,
+    OptionGroup,
+    StatusIndicator,
+    TimestampDisplay,
+    toSafeString
+} from '../../../../utils/tsxUtils';
+import {
+    base64FromUInt8Array,
+    cullText,
+    encodeBase64,
+    prettyBytes,
+    prettyMilliseconds,
+    titleCase
+} from '../../../../utils/utils';
+import { range } from '../../../misc/common';
+import { KowlJsonView } from '../../../misc/KowlJsonView';
 import RemovableFilter from '../../../misc/RemovableFilter';
+import { SingleSelect, SingleSelectProps } from '../../../misc/Select';
+import DeleteRecordsModal from '../DeleteRecordsModal/DeleteRecordsModal';
 import JavascriptFilterModal from './JavascriptFilterModal';
+import { getPreviewTags, PreviewSettings } from './PreviewSettings';
+import styles from './styles.module.scss';
 
 
 const payloadEncodingPairs = [
@@ -137,6 +138,7 @@ const payloadEncodingPairs = [
     { value: PayloadEncoding.BINARY, label: 'Binary' },
     { value: PayloadEncoding.UINT, label: 'Unsigned Int' },
     { value: PayloadEncoding.CONSUMER_OFFSETS, label: 'Consumer Offsets' },
+    { value: PayloadEncoding.BASE64_JAVA, label: 'Base64 Java' },
 ];
 
 
@@ -548,8 +550,9 @@ export class TopicMessageView extends Component<TopicMessageViewProps> {
                                   onClick={() => {
                                       appGlobal.history.push(`/topics/${encodeURIComponent(topic.topicName)}/produce-record`);
                                   }}
+                                  isDisabled={!uiSettings.enableTopicOperations}
                                 >
-                                    Produce Record
+                                    {uiSettings.enableTopicOperations ? 'Produce Record' : <Tooltip placement="top" label="Disabled." hasArrow>Produce Record</Tooltip>}
                                 </MenuItem>
                                 {DeleteRecordsMenuItem('2', isCompacted, topic.allowedActions ?? [], () => (this.deleteRecordsModalAlive = this.deleteRecordsModalVisible = true))}
                             </MenuList>
@@ -1787,10 +1790,12 @@ function hasDeleteRecordsPrivilege(allowedActions: Array<TopicAction>) {
 }
 
 function DeleteRecordsMenuItem(key: string, isCompacted: boolean, allowedActions: Array<TopicAction>, onClick: () => void) {
-    const isEnabled = !isCompacted && hasDeleteRecordsPrivilege(allowedActions) && isSupported(Feature.DeleteRecords);
+    const isEnabled = uiSettings.enableTopicOperations && !isCompacted && hasDeleteRecordsPrivilege(allowedActions) && isSupported(Feature.DeleteRecords);
 
     let errorText: string | undefined;
-    if (isCompacted) errorText = 'Records on Topics with the \'compact\' cleanup policy cannot be deleted.';
+    
+    if (!uiSettings.enableTopicOperations) errorText = 'Disabled.';
+    else if (isCompacted) errorText = 'Records on Topics with the \'compact\' cleanup policy cannot be deleted.';
     else if (!hasDeleteRecordsPrivilege(allowedActions)) errorText = 'You\'re not permitted to delete records on this topic.';
     else if (!isSupported(Feature.DeleteRecords)) errorText = 'The cluster doesn\'t support deleting records.';
 
